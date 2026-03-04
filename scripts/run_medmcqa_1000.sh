@@ -12,8 +12,10 @@ echo "=========================================="
 echo "MedMCQA Evaluation - 1000 Samples"
 echo "=========================================="
 
-OUTPUT_DIR="/home/puertao/llm/no-harm-vllm_jury_v3/data/results/vllm/medmcqa_1000"
-CONFIG="/home/puertao/llm/no-harm-vllm_jury_v3/config/vllm_jury_config.yaml"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+OUTPUT_DIR="$REPO_ROOT/data/results/vllm/medmcqa_1000"
+CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
 
 echo "Output directory: $OUTPUT_DIR"
 echo "Starting evaluation..."
@@ -21,7 +23,7 @@ echo ""
 
 python scripts/run_full_vllm_evaluation.py \
     --dataset medmcqa \
-    --num_samples 1000 \
+    --instances 1000 \
     --output_dir "$OUTPUT_DIR" \
     --config "$CONFIG" \
     --checkpoint_interval 100

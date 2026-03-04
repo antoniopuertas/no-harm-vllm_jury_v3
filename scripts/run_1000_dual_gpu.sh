@@ -20,9 +20,11 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 DATASET=$1
-BASE_OUTPUT_DIR="/home/puertao/llm/no-harm-vllm_jury_v3/data/results/vllm"
-CONFIG="/home/puertao/llm/no-harm-vllm_jury_v3/config/vllm_jury_config_dual_gpu.yaml"
+BASE_OUTPUT_DIR="$REPO_ROOT/data/results/vllm"
+CONFIG="$REPO_ROOT/config/vllm_jury_config_dual_gpu.yaml"
 OUTPUT_DIR="${BASE_OUTPUT_DIR}/${DATASET}_1000_dual_gpu"
 
 echo "=========================================="
