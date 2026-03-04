@@ -1,0 +1,41 @@
+================================================
+Commands to Run Evaluations with 1000 Instances
+================================================
+
+PubMedQA (1000 instances):
+--------------------------
+nohup python scripts/run_full_vllm_evaluation.py --dataset pubmedqa --instances 1000 > logs/pubmedqa_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+MedQA (1000 instances):
+-----------------------
+nohup python scripts/run_full_vllm_evaluation.py --dataset medqa --instances 1000 > logs/medqa_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+MedMCQA (1000 instances):
+-------------------------
+nohup python scripts/run_full_vllm_evaluation.py --dataset medmcqa --instances 1000 > logs/medmcqa_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+
+Full Datasets (no limit):
+-------------------------
+nohup python scripts/run_full_vllm_evaluation.py --dataset pubmedqa > logs/pubmedqa_full_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+nohup python scripts/run_full_vllm_evaluation.py --dataset medqa > logs/medqa_full_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+nohup python scripts/run_full_vllm_evaluation.py --dataset medmcqa > logs/medmcqa_full_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+
+Check Running Jobs:
+-------------------
+ps aux | grep run_full_vllm_evaluation
+
+Check Logs (tail last 50 lines):
+---------------------------------
+tail -50 logs/medmcqa_*.log
+
+Check Progress (monitor live):
+-------------------------------
+tail -f logs/medmcqa_*.log
+
+Stop Running Job:
+-----------------
+# Get PID first with: ps aux | grep run_full_vllm_evaluation
+# Then send graceful shutdown signal:
+kill -SIGINT <PID>

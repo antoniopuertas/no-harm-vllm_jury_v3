@@ -1,0 +1,53 @@
+================================================
+QUICK START: Dual-GPU Evaluation (2x Faster!)
+================================================
+
+STOP CURRENT SLOW EVALUATION:
+==============================
+kill -SIGINT 39381
+
+
+RUN WITH DUAL-GPU CONFIG (RECOMMENDED):
+========================================
+
+MedMCQA (1000 instances, 2x faster):
+-------------------------------------
+bash scripts/run_1000_dual_gpu.sh medmcqa
+
+OR manually:
+nohup python scripts/run_full_vllm_evaluation.py --dataset medmcqa --instances 1000 --config config/vllm_jury_config_dual_gpu.yaml > logs/medmcqa_dual_gpu_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+
+PubMedQA (1000 instances, 2x faster):
+--------------------------------------
+bash scripts/run_1000_dual_gpu.sh pubmedqa
+
+
+MedQA (1000 instances, 2x faster):
+-----------------------------------
+bash scripts/run_1000_dual_gpu.sh medqa
+
+
+WHAT'S DIFFERENT:
+=================
+✅ OLMo-32B:    2 GPUs, batch_size 48 (was 24) → 2x faster
+✅ Nemotron-30B: 2 GPUs, batch_size 48 (was 24) → 2x faster
+✅ Gemma3-27B:   2 GPUs, batch_size 64 (was 32) → 2x faster
+✅ Uses both H100 GPUs simultaneously
+✅ Expected speedup: 2x for evaluation
+
+
+MONITOR PROGRESS:
+=================
+tail -f logs/medmcqa_dual_gpu_*.log
+
+
+CHECK IF RUNNING:
+=================
+ps aux | grep run_full_vllm_evaluation
+
+
+EXPECTED TIMINGS (1000 instances):
+===================================
+Single GPU:  ~50-60 minutes
+Dual GPU:    ~25-30 minutes

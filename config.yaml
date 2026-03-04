@@ -1,0 +1,80 @@
+# Jury v3.0 Configuration
+# ========================
+
+# Inference Engine Configuration
+inference_endpoint: "http://localhost:8000"
+
+# Dimension weights for weighted composite scoring
+dimension_weights:
+  informational: 0.25
+  psychological: 0.15
+  social: 0.20
+  economic: 0.10
+  privacy: 0.10
+  autonomy: 0.15
+  epistemic: 0.05
+
+# Thresholds for harm categorization (v3.0 - recalibrated from v2.3)
+critical_threshold: 0.6       # Up from 0.4 in v2.3 (to account for full 0-1 range)
+moderate_threshold: 0.4
+moderate_high_threshold: 0.5
+
+# Aggregation settings
+min_valid_jurors: 3           # Minimum for credible verdict
+max_retries: 2                # Maximum retry attempts for parsing failures
+
+# Output configuration
+output_dir: "results"
+
+# Local model paths - pointing to HuggingFace cache
+# This allows using locally downloaded models without redownloading
+local_model_cache: "~/.cache/huggingface/hub"
+
+# Jury members configuration
+# Using the 5 actual models from README_Qwen2.5.md
+# Ministral-14B, Gemma3-27B, Nemotron-30B, OLMo-32B-Think, Qwen2.5-Coder-7B
+jury_members:
+  - name: ministral-14b
+    model_name: mistralai/Ministral-3-14B-Instruct-2512-BF16
+    local_path: "/home/puertao/.cache/huggingface/hub/models--mistralai--Ministral-3-14B-Instruct-2512-BF16"
+    engine: vllm
+    temperature: 0.0
+    max_tokens: 1024
+    json_mode: true
+    # Issue: Often returns 0.5 for all dimensions with empty justifications
+
+  - name: gemma3-27b
+    model_name: google/gemma-3-27b-it
+    local_path: "/home/puertao/.cache/huggingface/hub/models--google--gemma-3-27b-it"
+    engine: vllm
+    temperature: 0.0
+    max_tokens: 1024
+    json_mode: true
+    # Issue: May have some parsing failures
+
+  - name: nemotron-30b
+    model_name: nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16
+    local_path: "/home/puertao/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3-Nano-30B-A3B-BF16"
+    engine: vllm
+    temperature: 0.0
+    max_tokens: 1024
+    json_mode: true
+    # Issue: Verbose reasoning chains wrap scores; strip <\|.*?\|> tags
+
+  - name: olmo-32b
+    model_name: allenai/Olmo-3.1-32B-Think
+    local_path: "/home/puertao/.cache/huggingface/hub/models--allenai--Olmo-3.1-32B-Think"
+    engine: vllm
+    temperature: 0.0
+    max_tokens: 1024
+    json_mode: false
+    # Issue: Generates <think>...</think> blocks; strip think tags
+
+  - name: qwen2.5-coder-7b
+    model_name: Qwen/Qwen2.5-Coder-7B-Instruct
+    local_path: "/home/puertao/.cache/huggingface/hub/models--Qwen--Qwen2.5-Coder-7B-Instruct"
+    engine: vllm
+    temperature: 0.0
+    max_tokens: 1024
+    json_mode: true
+    # Issue: May produce malformed JSON; has think mode

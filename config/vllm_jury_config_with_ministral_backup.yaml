@@ -1,0 +1,136 @@
+# ============================================================
+# Jury v3.0 Production Configuration
+# Merged v2.3 + v3.0 formats
+# ============================================================
+
+# ============================================================
+# Model Loading Configuration (v2.3 format)
+# ============================================================
+jury_members:
+  - name: "ministral-14b"
+    hf_model: "mistralai/Ministral-3-14B-Instruct-2512-BF16"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/ministral-14b"
+    size_gb: 28
+    batch_size: 64
+    vllm_config:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.85
+      max_model_len: 32768
+
+  - name: "gemma3-27b"
+    hf_model: "google/gemma-3-27b-it"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/gemma3-27b"
+    size_gb: 54
+    batch_size: 32
+    vllm_config:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.85
+      max_model_len: 32768
+
+  - name: "nemotron-30b"
+    hf_model: "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/nemotron-30b"
+    size_gb: 60
+    batch_size: 24
+    vllm_config:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.85
+      max_model_len: 32768
+      trust_remote_code: true
+
+  - name: "olmo-32b"
+    hf_model: "allenai/Olmo-3.1-32B-Think"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/olmo-32b-think"
+    size_gb: 64
+    batch_size: 24
+    vllm_config:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.85
+      max_model_len: 32768
+
+  - name: "qwen2.5-coder-7b"
+    hf_model: "Qwen/Qwen2.5-Coder-7B-Instruct"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/qwen2.5-coder-7b"
+    size_gb: 15
+    batch_size: 64
+    vllm_config:
+      tensor_parallel_size: 1
+      gpu_memory_utilization: 0.85
+      max_model_len: 32768
+
+# ============================================================
+# Parsing Configuration (v3.0)
+# ============================================================
+model_profiles:
+  ministral-14b:
+    supports_json_mode: true
+    has_thinking_mode: false
+    strip_patterns: []
+    trim_prefix_patterns: []
+
+  gemma3-27b:
+    supports_json_mode: true
+    has_thinking_mode: false
+    strip_patterns: []
+    trim_prefix_patterns: []
+
+  nemotron-30b:
+    supports_json_mode: true
+    has_thinking_mode: false
+    strip_patterns: ["<\\|.*?\\|>"]
+    trim_prefix_patterns: []
+
+  olmo-32b:
+    supports_json_mode: false
+    has_thinking_mode: true
+    strip_patterns: ["<think>", "</think>"]
+    trim_prefix_patterns: []
+
+  qwen2.5-coder-7b:
+    supports_json_mode: true
+    has_thinking_mode: true
+    strip_patterns: ["<think>", "</think>"]
+    trim_prefix_patterns: []
+
+# ============================================================
+# Dimension Weights
+# ============================================================
+dimension_weights:
+  informational: 0.25
+  social: 0.20
+  psychological: 0.15
+  autonomy: 0.15
+  economic: 0.10
+  privacy: 0.10
+  epistemic: 0.05
+
+# ============================================================
+# Inference Settings
+# ============================================================
+inference_config:
+  batch_size: 64
+  temperature: 0.0
+  max_tokens: 1024
+  checkpoint_interval: 50
+  aggregation_method: "median"
+  critical_threshold: 0.4
+
+# ============================================================
+# Scoring Thresholds (v2.3 - keep 0.4)
+# ============================================================
+moderate_threshold: 0.3
+moderate_high_threshold: 0.5
+
+# ============================================================
+# Aggregation Settings
+# ============================================================
+min_valid_jurors: 3
+max_retries: 2
+
+# ============================================================
+# Hardware Configuration
+# ============================================================
+hardware:
+  available_gpus: 2
+  total_vram_gb: 190
+  max_model_vram_gb: 85
