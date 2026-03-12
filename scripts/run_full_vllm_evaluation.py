@@ -38,6 +38,8 @@ import statistics
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+REPO_ROOT = Path(__file__).parent.parent
+
 from src.inference.vllm_engine import VLLMEngine
 from src.inference.model_manager import ModelManager
 from src.evaluation.multi_dim_jury import MultiDimensionalJuryScorer
@@ -655,12 +657,12 @@ def main():
     )
     parser.add_argument(
         "--output_dir",
-        default="/home/puertao/llm/no-harm-vllm_jury_v3/data/results/vllm/full_runs",
+        default=str(REPO_ROOT / "data/results/vllm/full_runs"),
         help="Output directory for results"
     )
     parser.add_argument(
         "--config",
-        default="/home/puertao/llm/no-harm-vllm_jury_v3/config/vllm_jury_config.yaml",
+        default=str(REPO_ROOT / "config/vllm_jury_config.yaml"),
         help="Path to jury config"
     )
     parser.add_argument(

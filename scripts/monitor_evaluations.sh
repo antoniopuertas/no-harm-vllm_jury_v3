@@ -27,10 +27,13 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
 # Configuration
-RESULTS_DIR="${RESULTS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/data/results/vllm/full_runs}"
-LOGS_DIR="${LOGS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/logs}"
-SCRIPTS_DIR="${SCRIPTS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/scripts}"
+RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/data/results/vllm/full_runs}"
+LOGS_DIR="${LOGS_DIR:-$REPO_ROOT/logs}"
+SCRIPTS_DIR="${SCRIPTS_DIR:-$SCRIPT_DIR}"
 CHECKPOINT_DIR="${RESULTS_DIR}"
 
 # Dataset configurations

@@ -36,11 +36,14 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+
 # Configuration
-SCRIPTS_DIR="${SCRIPTS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/scripts}"
-RESULTS_DIR="${RESULTS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/data/results/vllm/full_runs}"
-LOGS_DIR="${LOGS_DIR:-/home/puertao/llm/no-harm-vllm_jury_v3/logs}"
-CONFIG_PATH="${CONFIG_PATH:-/home/puertao/llm/no-harm-vllm_jury_v3/config/vllm_jury_config.yaml}"
+SCRIPTS_DIR="${SCRIPTS_DIR:-$SCRIPT_DIR}"
+RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/data/results/vllm/full_runs}"
+LOGS_DIR="${LOGS_DIR:-$REPO_ROOT/logs}"
+CONFIG_PATH="${CONFIG_PATH:-$REPO_ROOT/config/vllm_jury_config.yaml}"
 
 # Parse arguments
 OUTPUT_DIR=""

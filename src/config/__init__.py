@@ -90,7 +90,7 @@ def load_config(config_path: str) -> JuryConfig:
         min_valid_jurors=config_data.get("min_valid_jurors", 3),
         max_retries=config_data.get("max_retries", 2),
         output_dir=config_data.get("output_dir", "results"),
-        local_model_cache=config_data.get("local_model_cache", "/home/puertao/.cache/huggingface/hub"),
+        local_model_cache=config_data.get("local_model_cache", str(Path.home() / ".cache/huggingface/hub")),
         jury_members=jury_members,
     )
 
@@ -119,12 +119,12 @@ def get_default_config() -> JuryConfig:
         min_valid_jurors=3,
         max_retries=2,
         output_dir="results",
-        local_model_cache="/home/puertao/.cache/huggingface/hub",
+        local_model_cache=str(Path.home() / ".cache/huggingface/hub"),
         jury_members=[
             JuryMemberConfig(
                 name="ministral-14b",
                 model_name="mistralai/Ministral-3-14B-Instruct-2512-BF16",
-                local_path="/home/puertao/.cache/huggingface/hub/models--mistralai--Ministral-3-14B-Instruct-2512-BF16",
+                local_path=str(Path.home() / ".cache/huggingface/hub/models--mistralai--Ministral-3-14B-Instruct-2512-BF16"),
                 engine="vllm",
                 temperature=0.0,
                 max_tokens=1024,
@@ -133,7 +133,7 @@ def get_default_config() -> JuryConfig:
             JuryMemberConfig(
                 name="gemma3-27b",
                 model_name="google/gemma-3-27b-it",
-                local_path="/home/puertao/.cache/huggingface/hub/models--google--gemma-3-27b-it",
+                local_path=str(Path.home() / ".cache/huggingface/hub/models--google--gemma-3-27b-it"),
                 engine="vllm",
                 temperature=0.0,
                 max_tokens=1024,
@@ -142,7 +142,7 @@ def get_default_config() -> JuryConfig:
             JuryMemberConfig(
                 name="nemotron-30b",
                 model_name="nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
-                local_path="/home/puertao/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+                local_path=str(Path.home() / ".cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3-Nano-30B-A3B-BF16"),
                 engine="vllm",
                 temperature=0.0,
                 max_tokens=1024,
@@ -151,7 +151,7 @@ def get_default_config() -> JuryConfig:
             JuryMemberConfig(
                 name="olmo-32b",
                 model_name="allenai/Olmo-3.1-32B-Think",
-                local_path="/home/puertao/.cache/huggingface/hub/models--allenai--Olmo-3.1-32B-Think",
+                local_path=str(Path.home() / ".cache/huggingface/hub/models--allenai--Olmo-3.1-32B-Think"),
                 engine="vllm",
                 temperature=0.0,
                 max_tokens=1024,
@@ -160,7 +160,7 @@ def get_default_config() -> JuryConfig:
             JuryMemberConfig(
                 name="qwen2.5-coder-7b",
                 model_name="Qwen/Qwen2.5-Coder-7B-Instruct",
-                local_path="/home/puertao/.cache/huggingface/hub/models--Qwen--Qwen2.5-Coder-7B-Instruct",
+                local_path=str(Path.home() / ".cache/huggingface/hub/models--Qwen--Qwen2.5-Coder-7B-Instruct"),
                 engine="vllm",
                 temperature=0.0,
                 max_tokens=1024,

@@ -39,8 +39,8 @@ jury_members:
       trust_remote_code: true
 
   - name: "olmo-32b"
-    hf_model: "allenai/Olmo-3.1-32B-Think"
-    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/olmo-32b-think"
+    hf_model: "allenai/Olmo-3.1-32B-Instruct"
+    local_path: "/nfs/staging/puertao/noharm/huggingface_cache/olmo-32b-instruct"
     size_gb: 64
     batch_size: 24
     vllm_config:
