@@ -125,10 +125,11 @@ All commands must be run from the project root directory.
 python scripts/run_full_vllm_evaluation.py \
     --dataset medmcqa \
     --instances 10 \
+    --output_dir data/results/vllm/full_runs \
     --config config/vllm_jury_config.yaml
 
 # Score 1000 samples with dual GPU (recommended for large runs)
-bash scripts/run_1000_dual_gpu.sh medmcqa
+bash scripts/run_1000_dual_gpu_safe.sh medmcqa
 
 # Score all supported datasets sequentially
 bash scripts/run_full_evaluation_all_datasets.sh
@@ -136,7 +137,7 @@ bash scripts/run_full_evaluation_all_datasets.sh
 
 Supported datasets: `medmcqa`, `pubmedqa`, `medqa`
 
-> **Note:** The helper scripts (`run_1000_dual_gpu.sh`, `run_full_evaluation_all_datasets.sh`) default to writing output inside the repo's `data/results/` directory. To write elsewhere, use `--output_dir /your/path` with `run_full_vllm_evaluation.py` directly.
+> **Note:** Always pass `--output_dir` explicitly when calling `run_full_vllm_evaluation.py` directly. The script's built-in default is an absolute path tied to the original developer's machine and will not resolve correctly elsewhere. The helper scripts (`run_1000_dual_gpu_safe.sh`, `run_full_evaluation_all_datasets.sh`) already hard-code a repo-relative output path and do not require this flag.
 
 ---
 
@@ -173,14 +174,27 @@ Note: `config.yaml` at the repo root controls aggregation thresholds. `config/vl
 
 ## Output
 
-Results are written under `data/results/vllm/full_runs/` (configurable via `--output_dir`):
+Results are written under the directory passed to `--output_dir`. The script always creates two fixed items directly inside that directory — you cannot rename them via CLI:
 
 ```
-{dataset}_full_results/
-├── results.json          # Per-instance dimension scores, final score, and harm category
-├── jury_details.json     # Per-instance question, response, and per-juror scores with justifications
-└── metadata.json         # Run configuration and dataset statistics
-{dataset}_consolidated.json  # Flattened results across all instances
+<output_dir>/
+├── {dataset}_full_results/           # created by the script; name is fixed
+│   ├── results.json                  # Per-instance dimension scores, final score, and harm category
+│   ├── jury_details.json             # Per-instance question, response, and per-juror scores with justifications
+│   └── metadata.json                 # Run configuration and dataset statistics
+└── {dataset}_consolidated.json       # Flattened results across all instances
+```
+
+To reproduce the layout in `data/results/vllm/full_runs/` pass that path as `--output_dir`. With the existing results for all three datasets the tree is:
+
+```
+data/results/vllm/full_runs/
+├── medmcqa_full_results/
+├── medmcqa_consolidated.json
+├── medqa_full_results/
+├── medqa_consolidated.json
+├── pubmedqa_full_results/
+└── pubmedqa_consolidated.json
 ```
 
 Example record in `results.json`:
