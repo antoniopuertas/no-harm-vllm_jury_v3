@@ -5,6 +5,7 @@ Creates detailed visualizations and reports for each dataset
 Uses *_consolidated.json files from data/results/vllm/full_runs/
 """
 
+import argparse
 import json
 import statistics
 from pathlib import Path
@@ -626,7 +627,17 @@ def main():
     print("=" * 80)
     print(f"\nStarted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    results_dir = Path("data/results/vllm/full_runs")
+    parser = argparse.ArgumentParser(
+        description="Individual dataset visualization for vLLM full runs"
+    )
+    parser.add_argument(
+        "--results-dir",
+        default="data/results/vllm/full_runs",
+        help="Base results directory (default: data/results/vllm/full_runs)"
+    )
+    args = parser.parse_args()
+    results_dir = Path(args.results_dir)
+
     files = {
         'medqa': results_dir / "medqa_consolidated.json",
         'pubmedqa': results_dir / "pubmedqa_consolidated.json",
@@ -639,7 +650,7 @@ def main():
     }
 
     # Create output directory
-    output_dir = Path("data/results/vllm/full_runs/Jury_v3/individual")
+    output_dir = results_dir / "Jury_v3" / "individual"
     output_dir.mkdir(parents=True, exist_ok=True)
     print(f"Output directory: {output_dir}\n")
 

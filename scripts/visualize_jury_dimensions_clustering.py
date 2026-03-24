@@ -105,18 +105,19 @@ def load_dataset(dataset_dir: Path, model: str):
     }
 
 
-def create_correlation_figure(model: str, output_dir: Path):
+def create_correlation_figure(model: str, output_dir: Path, datasets=None):
     """
     Figure A: 1×3 grid of 7×7 Pearson correlation heatmaps.
     One subplot per dataset. Shared diverging color scale [-1, 1].
     """
-    dataset_names = list(DATASETS.keys())
+    _datasets = datasets if datasets is not None else DATASETS
+    dataset_names = list(_datasets.keys())
     n_datasets = len(dataset_names)
 
     # Pre-load all datasets
     all_corr = []
     all_n = []
-    for ds_name, ds_dir in DATASETS.items():
+    for ds_name, ds_dir in _datasets.items():
         data = load_dataset(ds_dir, model)
         scores = data["scores"]
         n = len(scores)
@@ -169,17 +170,18 @@ def create_correlation_figure(model: str, output_dir: Path):
     return out
 
 
-def create_radar_figure(model: str, output_dir: Path):
+def create_radar_figure(model: str, output_dir: Path, datasets=None):
     """
     Figure B: 1×3 grid of radar/spider charts.
     Each subplot shows mean dimension scores for Low vs Critical instances.
     """
+    _datasets = datasets if datasets is not None else DATASETS
     n_dims = len(DIMENSIONS)
     # Angles for each dimension, evenly spaced, closing the polygon
     angles = np.linspace(0, 2 * np.pi, n_dims, endpoint=False).tolist()
     angles += angles[:1]  # close loop
 
-    dataset_names = list(DATASETS.keys())
+    dataset_names = list(_datasets.keys())
     fig, axes = plt.subplots(
         1, len(dataset_names),
         figsize=(18, 6),
@@ -188,7 +190,7 @@ def create_radar_figure(model: str, output_dir: Path):
 
     color_map = {"Low": "#2E86AB", "Critical": "#E63946"}
 
-    for ax, ds_name, ds_dir in zip(axes, dataset_names, DATASETS.values()):
+    for ax, ds_name, ds_dir in zip(axes, dataset_names, _datasets.values()):
         data = load_dataset(ds_dir, model)
         scores = data["scores"]
         categories = data["categories"]
@@ -234,21 +236,34 @@ def main():
     )
     parser.add_argument("--model", default=None,
                         help="Single model to run. Default: all models.")
+    parser.add_argument(
+        "--results-dir",
+        default=str(_REPO_ROOT / "data/results/vllm/full_runs"),
+        help="Base results directory (default: data/results/vllm/full_runs)"
+    )
     args = parser.parse_args()
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    results_dir = Path(args.results_dir)
+    datasets = {
+        "medqa":    results_dir / "medqa_full_results",
+        "pubmedqa": results_dir / "pubmedqa_full_results",
+        "medmcqa":  results_dir / "medmcqa_full_results",
+    }
+    output_dir = results_dir / "Jury_V3_dimensions"
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     models_to_run = [args.model] if args.model else MODELS
 
     print("=" * 70)
     print("JURY v3 DIMENSION CLUSTERING VISUALIZATIONS")
     print("=" * 70)
-    print(f"  Output: {OUTPUT_DIR}")
+    print(f"  Output: {output_dir}")
     print()
 
     for model in models_to_run:
         print(f"Processing {model}...")
-        create_correlation_figure(model, OUTPUT_DIR)
-        create_radar_figure(model, OUTPUT_DIR)
+        create_correlation_figure(model, output_dir, datasets=datasets)
+        create_radar_figure(model, output_dir, datasets=datasets)
 
     print()
     print("=" * 70)

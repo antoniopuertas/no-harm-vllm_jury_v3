@@ -42,7 +42,7 @@ REPO_ROOT = Path(__file__).parent.parent
 
 from src.inference.vllm_engine import VLLMEngine
 from src.inference.model_manager import ModelManager
-from src.evaluation.multi_dim_jury import MultiDimensionalJuryScorer
+from src.evaluation.multi_dim_jury_v2 import MultiDimensionalJuryScorer
 from src.data.dataset_loaders import get_dataset_loader
 
 # Setup logging
@@ -245,7 +245,7 @@ def score_with_jury_batch(
         if scores is None:
             logger.warning(f"[{jury_member}] Failed to score instance {instance.get('id', f'instance_{idx}')} - all dimensions failed")
             # Create default scores for failed extraction
-            from src.metrics.harm_dimensions import HarmDimensionRegistry
+            from src.metrics.harm_dimensions_v2 import HarmDimensionRegistry
             all_dimensions = HarmDimensionRegistry.get_all_dimensions()
             results.append({
                 "instance_id": instance.get("id", f"instance_{idx}"),

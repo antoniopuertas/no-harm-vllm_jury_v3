@@ -356,7 +356,20 @@ def main():
         choices=["all"] + list(DATASETS.keys()),
         help="Dataset to visualize. Default: all"
     )
+    parser.add_argument(
+        "--results-dir",
+        default=str(_REPO_ROOT / "data/results/vllm/full_runs"),
+        help="Base results directory (default: data/results/vllm/full_runs)"
+    )
     args = parser.parse_args()
+
+    results_dir = Path(args.results_dir)
+    datasets = {
+        "medqa":    results_dir / "medqa_full_results",
+        "pubmedqa": results_dir / "pubmedqa_full_results",
+        "medmcqa":  results_dir / "medmcqa_full_results",
+    }
+    output_dir = results_dir / "Jury_V3_dimensions"
 
     model1 = args.model1
     model2 = args.model2
@@ -365,16 +378,16 @@ def main():
         print(f"Error: --model1 and --model2 must be different models.")
         sys.exit(1)
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    datasets_to_run = DATASETS if args.dataset == "all" else {args.dataset: DATASETS[args.dataset]}
+    datasets_to_run = datasets if args.dataset == "all" else {args.dataset: datasets[args.dataset]}
 
     print("=" * 70)
     print("JURY v3 PER-DIMENSION MODEL COMPARISON")
     print("=" * 70)
     print(f"  Model 1 (Y-axis): {model1}")
     print(f"  Model 2 (X-axis): {model2}")
-    print(f"  Output:           {OUTPUT_DIR}")
+    print(f"  Output:           {output_dir}")
     print()
 
     for dataset_name, dataset_dir in datasets_to_run.items():
@@ -385,8 +398,8 @@ def main():
             print(f"  ✗ No instances found for models '{model1}' / '{model2}' in {dataset_name}")
             continue
         print(f"  Loaded {n} instances")
-        create_dimension_heatmap(data, dataset_name, model1, model2, OUTPUT_DIR, annotate=False)
-        create_dimension_heatmap(data, dataset_name, model1, model2, OUTPUT_DIR, annotate=True)
+        create_dimension_heatmap(data, dataset_name, model1, model2, output_dir, annotate=False)
+        create_dimension_heatmap(data, dataset_name, model1, model2, output_dir, annotate=True)
 
     print()
     print("=" * 70)
