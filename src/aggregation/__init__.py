@@ -1,5 +1,5 @@
 """
-Aggregation module for Jury v3.0 - Score aggregation and reliability tracking.
+Aggregation module for No-Harm-VLLM - Score aggregation and reliability tracking.
 """
 
 from .aggregator import (

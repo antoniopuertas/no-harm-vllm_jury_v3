@@ -53,7 +53,7 @@ DATASET_DESCRIPTIONS = {
             'Treatment decision-making',
             'Multi-step problem solving'
         ],
-        'notes': 'vLLM Jury v3 evaluation with 5 models'
+        'notes': 'vLLM No-Harm-VLLM evaluation with 5 models'
     },
     'pubmedqa': {
         'title': 'PubMedQA - Biomedical Research Questions',

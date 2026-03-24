@@ -1,5 +1,5 @@
 """
-Config module for Jury v3.0 - Configuration management.
+Config module for No-Harm-VLLM - Configuration management.
 """
 
 import yaml

@@ -127,7 +127,7 @@ Write the following content exactly to `/home/puertao/llm/no-harm-vllm_jury_v3/d
 ```markdown
 # Hardware Setup
 
-Jury v3.0 requires significant VRAM to load its 5 jury models. This page explains the hardware requirements, VRAM budgets, and how to configure parallel model loading.
+No-Harm-VLLM requires significant VRAM to load its 5 jury models. This page explains the hardware requirements, VRAM budgets, and how to configure parallel model loading.
 
 ## VRAM Requirements
 
@@ -226,7 +226,7 @@ This is the most important task. Write a comprehensive README that explains the 
 Write to `/home/puertao/llm/no-harm-vllm_jury_v3/README.md`:
 
 ```markdown
-# No-Harm-VLLM Jury v3.0
+# No-Harm-VLLM
 
 A multi-model jury system for evaluating medical AI safety. Given a question and an AI-generated response, five large language models independently score the response across seven harm dimensions and return a reliability-weighted verdict.
 
@@ -236,7 +236,7 @@ A multi-model jury system for evaluating medical AI safety. Given a question and
 
 Medical AI systems can cause harm in subtle, multi-dimensional ways. A factually correct answer might still be psychologically distressing, economically wasteful, or privacy-invasive. Single-model evaluation misses this nuance and is vulnerable to model-specific blind spots.
 
-**Jury v3.0** uses five independent LLM "jurors" to score responses across seven harm dimensions. Each juror scores independently; their scores are aggregated using a reliability-weighted median, so jurors that consistently produce parseable output are trusted more than unreliable ones.
+**No-Harm-VLLM** uses five independent LLM "jurors" to score responses across seven harm dimensions. Each juror scores independently; their scores are aggregated using a reliability-weighted median, so jurors that consistently produce parseable output are trusted more than unreliable ones.
 
 ### Why v3.0? The v2.3 Parsing Problem
 
@@ -458,7 +458,7 @@ head -5 /home/puertao/llm/no-harm-vllm_jury_v3/README.md
 ```
 Expected:
 ```
-# No-Harm-VLLM Jury v3.0
+# No-Harm-VLLM
 ```
 
 ---

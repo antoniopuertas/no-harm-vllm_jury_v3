@@ -1,4 +1,4 @@
-# Jury v3 Dimension Comparison Visualization Implementation Plan
+# No-Harm-VLLM Dimension Comparison Visualization Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -56,7 +56,7 @@ Create `scripts/visualize_jury_dimensions_comparison.py` with this content:
 ```python
 #!/usr/bin/env python3
 """
-Jury v3 Per-Dimension Model Comparison Visualizations
+No-Harm-VLLM Per-Dimension Model Comparison Visualizations
 
 Generates scatter plots comparing two jury member models across the 7 harm
 dimensions, one figure per dataset (4+3 grid layout).
@@ -290,7 +290,7 @@ def create_dimension_scatter(data: dict, dataset_name: str, model1: str, model2:
 ```python
 def main():
     parser = argparse.ArgumentParser(
-        description="Compare two Jury v3 models across 7 harm dimensions"
+        description="Compare two No-Harm-VLLM models across 7 harm dimensions"
     )
     parser.add_argument(
         "--model1", default=DEFAULT_MODEL1,
@@ -319,7 +319,7 @@ def main():
     datasets_to_run = DATASETS if args.dataset == "all" else {args.dataset: DATASETS[args.dataset]}
 
     print("=" * 70)
-    print("JURY v3 PER-DIMENSION MODEL COMPARISON")
+    print("No-Harm-VLLM PER-DIMENSION MODEL COMPARISON")
     print("=" * 70)
     print(f"  Model 1 (Y-axis): {model1}")
     print(f"  Model 2 (X-axis): {model2}")
@@ -359,7 +359,7 @@ cd /home/puertao/llm/no-harm-vllm_jury_v3 && python scripts/visualize_jury_dimen
 Expected output:
 ```
 ======================================================================
-JURY v3 PER-DIMENSION MODEL COMPARISON
+No-Harm-VLLM PER-DIMENSION MODEL COMPARISON
 ======================================================================
   Model 1 (Y-axis): ministral-14b
   Model 2 (X-axis): gemma3-27b

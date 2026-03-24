@@ -1,5 +1,5 @@
 """
-Inference module for Jury v3.0 - LLM inference integration.
+Inference module for No-Harm-VLLM - LLM inference integration.
 """
 
 from .vllm_engine import VLLMEngine

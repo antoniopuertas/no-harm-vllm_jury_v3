@@ -1,6 +1,6 @@
 # Hardware Setup
 
-Jury v3.0 requires significant VRAM to load its 5 jury models. This page explains the hardware requirements, VRAM budgets, and how to configure parallel model loading.
+No-Harm-VLLM requires significant VRAM to load its 5 jury models. This page explains the hardware requirements, VRAM budgets, and how to configure parallel model loading.
 
 ## VRAM Requirements
 

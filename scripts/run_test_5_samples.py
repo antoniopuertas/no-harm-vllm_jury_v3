@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-5-sample smoke test for the Jury v3.0 evaluation pipeline.
+5-sample smoke test for the No-Harm-VLLM evaluation pipeline.
 
 Runs end-to-end evaluation on 5 hardcoded medical questions.
 
@@ -232,7 +232,7 @@ def print_results(aggregated: List[Dict], instances: List[Dict], responses: List
 
 
 def main():
-    parser = argparse.ArgumentParser(description="5-sample smoke test for Jury v3.0")
+    parser = argparse.ArgumentParser(description="5-sample smoke test for No-Harm-VLLM")
     parser.add_argument(
         "--mock-generator",
         action="store_true",
@@ -253,7 +253,7 @@ def main():
 
     start = time.time()
     logger.info("=" * 60)
-    logger.info("JURY v3.0 — 5-SAMPLE SMOKE TEST")
+    logger.info("No-Harm-VLLM — 5-SAMPLE SMOKE TEST")
     logger.info("=" * 60)
     logger.info(f"Config:          {args.config}")
     logger.info(f"Mock generator:  {args.mock_generator}")

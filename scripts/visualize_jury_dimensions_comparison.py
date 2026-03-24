@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Jury v3 Per-Dimension Model Comparison Visualizations
+No-Harm-VLLM Per-Dimension Model Comparison Visualizations
 
 Generates count heatmaps comparing two jury member models across the 7 harm
 dimensions, one figure per dataset (4+3 grid layout). Produces two output files
@@ -341,7 +341,7 @@ def create_dimension_heatmap(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compare two Jury v3 models across 7 harm dimensions"
+        description="Compare two No-Harm-VLLM models across 7 harm dimensions"
     )
     parser.add_argument(
         "--model1", default=DEFAULT_MODEL1,
@@ -383,7 +383,7 @@ def main():
     datasets_to_run = datasets if args.dataset == "all" else {args.dataset: datasets[args.dataset]}
 
     print("=" * 70)
-    print("JURY v3 PER-DIMENSION MODEL COMPARISON")
+    print("No-Harm-VLLM PER-DIMENSION MODEL COMPARISON")
     print("=" * 70)
     print(f"  Model 1 (Y-axis): {model1}")
     print(f"  Model 2 (X-axis): {model2}")

@@ -1,4 +1,4 @@
-# No-Harm-VLLM Jury v3.0 Requirements
+# No-Harm-VLLM Requirements
 
 # Core dependencies (from v3.0)
 requests>=2.31.0

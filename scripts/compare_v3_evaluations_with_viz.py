@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Compare and Visualize Jury v3 Evaluations Across Three Datasets (vLLM)
+Compare and Visualize No-Harm-VLLM Evaluations Across Three Datasets (vLLM)
 Generates comprehensive visualizations and analysis report
 """
 
@@ -92,7 +92,7 @@ def create_radar_chart(all_datasets, output_dir):
     ax.grid(True)
 
     plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
-    plt.title('Harm Dimension Scores Across Datasets\n(Jury v3 vLLM - Lower is Better)',
+    plt.title('Harm Dimension Scores Across Datasets\n(No-Harm-VLLM - Lower is Better)',
               size=14, weight='bold', pad=20)
 
     output_path = output_dir / 'radar_chart_cross_dataset.png'
@@ -129,7 +129,7 @@ def create_composite_comparison_bar_chart(all_datasets, output_dir):
 
     ax.set_ylabel('Composite Harm Score', weight='bold', size=12)
     ax.set_xlabel('Dataset', weight='bold', size=12)
-    ax.set_title('Composite Harm Score Comparison\n(Jury v3 vLLM - Mean ± Std Dev)',
+    ax.set_title('Composite Harm Score Comparison\n(No-Harm-VLLM - Mean ± Std Dev)',
                  weight='bold', size=14)
     ax.set_xticks(x)
     ax.set_xticklabels(dataset_names)
@@ -177,7 +177,7 @@ def create_dimension_heatmap(all_datasets, output_dir):
             text = ax.text(j, i, f'{data_matrix[i, j]:.3f}',
                           ha="center", va="center", color="black", weight='bold')
 
-    ax.set_title('Dimension Scores Heatmap Across Datasets\n(Jury v3 vLLM)',
+    ax.set_title('Dimension Scores Heatmap Across Datasets\n(No-Harm-VLLM)',
                  weight='bold', size=14, pad=15)
 
     output_path = output_dir / 'heatmap_dimensions.png'
@@ -208,7 +208,7 @@ def create_distribution_plots(all_datasets, output_dir):
         ax.legend()
         ax.grid(axis='y', alpha=0.3)
 
-    fig.suptitle('Distribution of Composite Harm Scores\n(Jury v3 vLLM)',
+    fig.suptitle('Distribution of Composite Harm Scores\n(No-Harm-VLLM)',
                  weight='bold', size=14, y=1.02)
 
     output_path = output_dir / 'distribution_plots.png'
@@ -247,7 +247,7 @@ def create_box_plots(all_datasets, output_dir):
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, rotation=45, ha='right', size=8)
     ax.set_ylabel('Harm Score', weight='bold', size=12)
-    ax.set_title('Dimension Score Distributions Across Datasets\n(Jury v3 vLLM)',
+    ax.set_title('Dimension Score Distributions Across Datasets\n(No-Harm-VLLM)',
                  weight='bold', size=14)
     ax.grid(axis='y', alpha=0.3)
     ax.set_ylim(-0.05, 1.05)
@@ -268,13 +268,13 @@ def generate_markdown_report(all_datasets, output_dir):
     report_path = output_dir / 'jury_v3_cross_dataset_comparison.md'
 
     with open(report_path, 'w') as f:
-        f.write("# Jury v3 Cross-Dataset Comparison Report (vLLM)\n")
+        f.write("# No-Harm-VLLM Cross-Dataset Comparison Report (vLLM)\n")
         f.write(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
         f.write("---\n\n")
 
         # Executive Summary
         f.write("## Executive Summary\n\n")
-        f.write("This report compares three medical evaluation datasets using **Jury v3** ")
+        f.write("This report compares three medical evaluation datasets using **No-Harm-VLLM** ")
         f.write("with **Critical Dimension Scoring** powered by **vLLM**:\n\n")
         f.write("- **MedQA**: US medical licensing exam questions\n")
         f.write("- **PubMedQA**: Biomedical research questions  \n")
@@ -408,7 +408,7 @@ def generate_markdown_report(all_datasets, output_dir):
         f.write("## Validation\n\n")
         f.write("✅ All jury members produced varied scores across datasets\n\n")
         f.write("✅ 100% response completion across all evaluations\n\n")
-        f.write("✅ Jury v3 with Critical Dimension Scoring validated\n\n")
+        f.write("✅ No-Harm-VLLM with Critical Dimension Scoring validated\n\n")
         f.write("✅ vLLM inference engine performance validated\n\n")
         f.write(f"**Report generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
@@ -417,12 +417,12 @@ def generate_markdown_report(all_datasets, output_dir):
 def main():
     """Main analysis and visualization pipeline"""
     print("=" * 80)
-    print("JURY v3 CROSS-DATASET COMPARISON & VISUALIZATION (vLLM)")
+    print("No-Harm-VLLM CROSS-DATASET COMPARISON & VISUALIZATION (vLLM)")
     print("=" * 80)
     print(f"\nStarted: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
     parser = argparse.ArgumentParser(
-        description="Compare Jury v3 evaluations across datasets"
+        description="Compare No-Harm-VLLM evaluations across datasets"
     )
     parser.add_argument(
         "--results-dir",

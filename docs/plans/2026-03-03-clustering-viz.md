@@ -22,7 +22,7 @@ Exact content to write:
 ```python
 #!/usr/bin/env python3
 """
-Jury v3 Per-Model Dimension Clustering Visualizations
+No-Harm-VLLM Per-Model Dimension Clustering Visualizations
 
 For each jury model produces two figures:
   A) 7x7 Pearson correlation matrix between harm dimensions (one subplot per dataset)
@@ -337,7 +337,7 @@ def main():
     models_to_run = [args.model] if args.model else MODELS
 
     print("=" * 70)
-    print("JURY v3 DIMENSION CLUSTERING VISUALIZATIONS")
+    print("No-Harm-VLLM DIMENSION CLUSTERING VISUALIZATIONS")
     print("=" * 70)
     print(f"  Output: {OUTPUT_DIR}")
     print()

@@ -1,4 +1,4 @@
-# No-Harm-VLLM Jury v3.0
+# No-Harm-VLLM
 
 A multi-model jury system for evaluating medical AI safety. Given a question and an AI-generated response, five large language models independently score the response across seven harm dimensions and return a reliability-weighted verdict.
 
@@ -8,7 +8,7 @@ A multi-model jury system for evaluating medical AI safety. Given a question and
 
 Medical AI systems can cause harm in subtle, multi-dimensional ways. A factually correct answer might still be psychologically distressing, economically wasteful, or privacy-invasive. Single-model evaluation misses this nuance and is vulnerable to model-specific blind spots.
 
-**Jury v3.0** uses five independent LLM "jurors" to score responses across seven harm dimensions. Each juror scores independently; their scores are aggregated using a reliability-weighted median, so jurors that consistently produce parseable output are trusted more than unreliable ones.
+**No-Harm-VLLM** uses five independent LLM "jurors" to score responses across seven harm dimensions. Each juror scores independently; their scores are aggregated using a reliability-weighted median, so jurors that consistently produce parseable output are trusted more than unreliable ones.
 
 ### Why v3.0? The v2.3 Parsing Problem
 

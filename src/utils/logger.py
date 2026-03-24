@@ -1,5 +1,5 @@
 """
-Logging module for Jury v3.0 - Parse observability and debugging.
+Logging module for No-Harm-VLLM - Parse observability and debugging.
 """
 
 import json

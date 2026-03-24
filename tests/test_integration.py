@@ -1,4 +1,4 @@
-"""# Integration tests for Jury v3.0
+"""# Integration tests for No-Harm-VLLM
 """
 
 import pytest

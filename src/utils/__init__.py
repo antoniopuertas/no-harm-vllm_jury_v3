@@ -1,5 +1,5 @@
 """
-Utils module for Jury v3.0 - Utility functions and helpers.
+Utils module for No-Harm-VLLM - Utility functions and helpers.
 """
 
 from .logger import ParseLogger, ParseLogEntry

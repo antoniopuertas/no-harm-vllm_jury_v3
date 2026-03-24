@@ -1,5 +1,5 @@
 # ============================================================
-# Jury v3.0 Hybrid GPU Configuration
+# No-Harm-VLLM Hybrid GPU Configuration
 # Uses single GPU for problematic models, dual GPU for OLMo only
 # ============================================================
 

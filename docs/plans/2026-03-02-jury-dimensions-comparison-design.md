@@ -1,4 +1,4 @@
-# Design: Jury v3 Per-Dimension Model Comparison Visualizations
+# Design: No-Harm-VLLM Per-Dimension Model Comparison Visualizations
 
 **Date:** 2026-03-02
 

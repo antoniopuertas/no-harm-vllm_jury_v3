@@ -41,7 +41,7 @@ log_header() {
 }
 
 # Start logging
-log_header "JURY v3.0 FULL EVALUATION - ALL DATASETS"
+log_header "No-Harm-VLLM FULL EVALUATION - ALL DATASETS"
 log "Repository: $REPO_DIR"
 log "Log file: $LOG_FILE"
 log "Start time: $(date)"

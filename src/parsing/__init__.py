@@ -1,5 +1,5 @@
 """
-Parsing module for Jury v3.0 - Bulletproof score extraction from jury models.
+Parsing module for No-Harm-VLLM - Bulletproof score extraction from jury models.
 """
 
 from .score_extractor import ScoreExtractor

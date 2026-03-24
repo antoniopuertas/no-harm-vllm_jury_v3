@@ -168,7 +168,7 @@ Replace it with:
 Find:
 ```python
 """
-Jury v3 Per-Dimension Model Comparison Visualizations
+No-Harm-VLLM Per-Dimension Model Comparison Visualizations
 
 Generates scatter plots comparing two jury member models across the 7 harm
 dimensions, one figure per dataset (4+3 grid layout).
@@ -183,7 +183,7 @@ Usage:
 Replace with:
 ```python
 """
-Jury v3 Per-Dimension Model Comparison Visualizations
+No-Harm-VLLM Per-Dimension Model Comparison Visualizations
 
 Generates count heatmaps comparing two jury member models across the 7 harm
 dimensions, one figure per dataset (4+3 grid layout). Produces two output files
