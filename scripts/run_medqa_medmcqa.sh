@@ -46,6 +46,12 @@ fi
 OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/$GPU_LABEL"
 MAIN_LOG="$LOGS_DIR/harm_v2_sequential_$(date +%Y%m%d_%H%M%S).log"
 
+if [[ "$GPU_LABEL" == "GB10" ]]; then
+    ENGINE_FLAG="--engine docker"
+else
+    ENGINE_FLAG="--engine native"
+fi
+
 mkdir -p "$OUTPUT_DIR" "$LOGS_DIR"
 
 DATASETS=("medqa" "medmcqa")
@@ -89,6 +95,7 @@ for dataset in "${DATASETS[@]}"; do
         --output_dir "$OUTPUT_DIR" \
         --config "$CONFIG" \
         --checkpoint_interval 100 \
+        $ENGINE_FLAG \
         2>&1 | tee -a "$MAIN_LOG"
 
     EXIT_CODE=${PIPESTATUS[0]}

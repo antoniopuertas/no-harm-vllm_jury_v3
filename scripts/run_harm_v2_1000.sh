@@ -49,6 +49,12 @@ fi
 
 OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/$GPU_LABEL"
 
+if [[ "$GPU_LABEL" == "GB10" ]]; then
+    ENGINE_FLAG="--engine docker"
+else
+    ENGINE_FLAG="--engine native"
+fi
+
 mkdir -p "$OUTPUT_DIR" "$LOGS_DIR"
 
 if [[ -n "$DATASET_FILTER" ]]; then
@@ -77,6 +83,7 @@ for dataset in "${DATASETS[@]}"; do
         --output_dir "$OUTPUT_DIR" \
         --config "$CONFIG" \
         --checkpoint_interval 100 \
+        $ENGINE_FLAG \
         > "$LOG" 2>&1 &
 
     echo "  PID $! | log: $LOG"
