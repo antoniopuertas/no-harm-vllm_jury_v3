@@ -10,6 +10,7 @@ Uses mocking to avoid loading actual 14B+ models during testing.
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from src.inference.vllm_engine import VLLMEngine
+from src.inference.vllm_engine_native import NativeVLLMEngine
 from src.evaluation.multi_dim_jury import (
     MultiDimensionalJuryScorer,
     DimensionScore,
@@ -569,6 +570,49 @@ class TestVLLMEngineErrorHandling:
 
         # Verify retry was attempted for failures
         assert mock_retry.call_count == 2  # Called for 2 failures
+
+
+class TestNativeVLLMEngineBasics:
+    """Test NativeVLLMEngine basic functionality with mocking"""
+
+    @patch('src.inference.vllm_engine_native.LLM')
+    def test_native_engine_instantiation(self, mock_llm):
+        """Should create NativeVLLMEngine with correct config"""
+        engine = NativeVLLMEngine(
+            gpu_memory_utilization=0.85,
+            tensor_parallel_size=1
+        )
+        assert engine is not None
+        assert engine.gpu_memory_utilization == 0.85
+        assert engine.tensor_parallel_size == 1
+        assert isinstance(engine.models, dict)
+
+    @patch('src.inference.vllm_engine_native.LLM')
+    def test_native_engine_load_model(self, mock_llm):
+        """Should load a model in-process"""
+        mock_llm_instance = MagicMock()
+        mock_llm.return_value = mock_llm_instance
+
+        engine = NativeVLLMEngine(gpu_memory_utilization=0.85)
+        engine.load_model(
+            model_name="test-model",
+            hf_model_path="test/model-path",
+            max_model_len=32768
+        )
+
+        assert "test-model" in engine.models
+        mock_llm.assert_called_once()
+
+    @patch('src.inference.vllm_engine_native.LLM')
+    def test_native_engine_unload_model(self, mock_llm):
+        """Should remove model and clear CUDA cache"""
+        mock_llm.return_value = MagicMock()
+
+        engine = NativeVLLMEngine(gpu_memory_utilization=0.85)
+        engine.load_model("test-model", "test/path")
+        engine.unload_model("test-model")
+
+        assert "test-model" not in engine.models
 
 
 if __name__ == "__main__":
