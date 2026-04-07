@@ -678,6 +678,12 @@ def main():
         dest="num_samples",
         help="Number of samples to evaluate (default: full dataset)"
     )
+    parser.add_argument(
+        "--engine",
+        choices=["native", "docker"],
+        default="docker",
+        help="Inference engine: 'native' for H100 (vLLM in-process), 'docker' for GB10"
+    )
 
     args = parser.parse_args()
 
@@ -704,10 +710,19 @@ def main():
 
     # Load model configs and initialize engine
     try:
-        engine = VLLMEngine(
-            gpu_memory_utilization=0.85,
-            tensor_parallel_size=1
-        )
+        if args.engine == "native":
+            from src.inference.vllm_engine_native import NativeVLLMEngine
+            engine = NativeVLLMEngine(
+                gpu_memory_utilization=0.85,
+                tensor_parallel_size=1
+            )
+            logger.info("[Engine] Using native vLLM engine (H100)")
+        else:
+            engine = VLLMEngine(
+                gpu_memory_utilization=0.85,
+                tensor_parallel_size=1
+            )
+            logger.info("[Engine] Using Docker vLLM engine (GB10)")
         manager = ModelManager(
             vllm_engine=engine,
             max_memory_gb=85,
