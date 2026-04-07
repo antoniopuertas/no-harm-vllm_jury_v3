@@ -14,7 +14,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-PYTHON="/home/puertao/.conda/envs/vllm-gemma/bin/python"
+PYTHON="$(which python)"
 OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2"
 CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
 LOGS_DIR="$REPO_ROOT/logs"
