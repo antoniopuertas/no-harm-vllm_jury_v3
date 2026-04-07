@@ -4,7 +4,8 @@
 # Cleans up any orphaned vLLM Docker containers before starting.
 #
 # Usage:
-#   bash scripts/run_medqa_medmcqa.sh
+#   bash scripts/run_medqa_medmcqa.sh --gpu H100
+#   bash scripts/run_medqa_medmcqa.sh --gpu GB10
 #
 # Monitor:
 #   tail -f logs/harm_v2_sequential_<timestamp>.log
@@ -13,9 +14,36 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 PYTHON="$(which python)"
-OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2"
-CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
 LOGS_DIR="$REPO_ROOT/logs"
+GPU_LABEL=""
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --gpu)
+            GPU_LABEL="$2"
+            shift 2
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 --gpu <H100|GB10>"
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z "$GPU_LABEL" ]]; then
+    echo "ERROR: --gpu flag is required. Use --gpu H100 or --gpu GB10"
+    exit 1
+fi
+
+if [[ "$GPU_LABEL" == "GB10" ]]; then
+    CONFIG="$REPO_ROOT/config/vllm_jury_config_gb10.yaml"
+else
+    CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
+fi
+
+OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/$GPU_LABEL"
 MAIN_LOG="$LOGS_DIR/harm_v2_sequential_$(date +%Y%m%d_%H%M%S).log"
 
 mkdir -p "$OUTPUT_DIR" "$LOGS_DIR"
@@ -27,7 +55,7 @@ log() {
 }
 
 log "================================================"
-log "harm_dimensions_v2 — medqa + medmcqa evaluation"
+log "harm_dimensions_v2 — medqa + medmcqa evaluation [$GPU_LABEL]"
 log "Datasets : ${DATASETS[*]}"
 log "Samples  : 1000 each"
 log "Output   : $OUTPUT_DIR"
