@@ -10,19 +10,6 @@ Medical AI systems can cause harm in subtle, multi-dimensional ways. A factually
 
 **No-Harm-VLLM** uses five independent LLM "jurors" to score responses across seven harm dimensions. Each juror scores independently; their scores are aggregated using a reliability-weighted median, so jurors that consistently produce parseable output are trusted more than unreliable ones.
 
-### Why v3.0? The v2.3 Parsing Problem
-
-The previous system (v2.3) had two critical flaws:
-
-| Problem | v2.3 behavior | v3.0 fix |
-|---------|---------------|----------|
-| **Parse failure default** | Failed parses silently returned 0.5 | Returns `None` — never fabricates a score |
-| **0.5 score ceiling** | Median dominated by 0.5 defaults → max observed score was 0.5 | Full 0.0–1.0 range after removing the default |
-| **Verbose reasoning models** | olmo-32b and nemotron-30b exhaust token budget on chain-of-thought, never reach formatted output | Increased `max_tokens` to 1024 for olmo-32b and nemotron-30b; other models use 512 at runtime |
-| **Thinking-mode models** | `<think>...</think>` blocks confuse JSON extractor | Model-specific cleaning profiles strip thinking tags before parsing |
-| **No retry** | One parse attempt, then give up | Retry with reformulated prompts (up to 2 retries) |
-
-**Result:** Parse success rate goes from ~40% (2/5 models working) to >90% across all five models.
 
 ---
 
