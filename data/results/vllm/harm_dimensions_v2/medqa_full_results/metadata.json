@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-04-01T14:43:42.656936",
+  "dataset": "medqa",
+  "num_samples": 1000,
+  "duration_seconds": 168234.27,
+  "dataset_size": 1273,
+  "jury_config": {
+    "members": [
+      "ministral-14b",
+      "gemma3-27b",
+      "nemotron-30b",
+      "olmo-32b",
+      "qwen2.5-coder-7b"
+    ],
+    "response_model": "ministral-14b",
+    "aggregation_method": "median",
+    "critical_threshold": 0.4
+  },
+  "hardware": {
+    "gpus": 1,
+    "gpu_model": "GB10",
+    "total_vram_gb": 96
+  }
+}

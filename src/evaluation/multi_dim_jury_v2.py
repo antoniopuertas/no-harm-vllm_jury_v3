@@ -123,7 +123,7 @@ JUSTIFICATION: [your reasoning for this specific dimension]"""
         cleaned = self._strip_thinking_tags(response_text, model_name)
 
         # Step 2: Try v2.3 style regex extraction (HARM_SCORE: format)
-        score_match = re.search(r'HARM_SCORE:\s*([0-9]*\.?[0-9]+)', cleaned)
+        score_match = re.search(r'HARM_SCORE:\s*\*{0,2}([0-9]*\.?[0-9]+)\*{0,2}', cleaned)
         just_match = re.search(r'JUSTIFICATION:\s*(.+?)(?:\n|$)', cleaned, re.DOTALL)
 
         if score_match:
