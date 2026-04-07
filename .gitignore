@@ -1,4 +1,11 @@
 data/
+!data/results/
+!data/results/vllm/
+!data/results/vllm/harm_dimensions_v2/
+!data/results/vllm/harm_dimensions_v2/GB10/
+!data/results/vllm/harm_dimensions_v2/GB10/**
+!data/results/vllm/harm_dimensions_v2/H100/
+!data/results/vllm/harm_dimensions_v2/H100/**
 logs/
 __pycache__/
 *.pyc
