@@ -2,16 +2,20 @@
 #
 # Full harm_dimensions_v2 evaluation on H100 — all 3 datasets, 1000 samples each.
 # Runs sequentially to avoid GPU OOM. Uses native vLLM (no Docker).
+# Each dataset runs under nohup so SSH disconnects don't kill the job.
 #
 # Usage:
 #   bash scripts/run_full_h100_evaluation.sh
 #   bash scripts/run_full_h100_evaluation.sh --dataset pubmedqa   # single dataset
 #
-# Monitor:
-#   tail -f logs/h100_full_eval_<timestamp>.log
+# Recommended launch (detach from terminal entirely):
+#   nohup bash scripts/run_full_h100_evaluation.sh > logs/h100_launch.log 2>&1 &
+#   echo "PID: $!"
 #
-
-set -e
+# Monitor:
+#   tail -f logs/h100_full_eval_<timestamp>.log          # main summary log
+#   tail -f logs/h100_pubmedqa_<timestamp>.log           # per-dataset log
+#
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -66,17 +70,24 @@ for dataset in "${DATASETS[@]}"; do
     log ""
     log ">>> Starting: $dataset"
     DATASET_START=$(date +%s)
+    DATASET_LOG="$LOGS_DIR/h100_${dataset}_$(date +%Y%m%d_%H%M%S).log"
+    log "    Log: $DATASET_LOG"
 
-    "$PYTHON" "$SCRIPT_DIR/run_full_vllm_evaluation.py" \
+    nohup "$PYTHON" "$SCRIPT_DIR/run_full_vllm_evaluation.py" \
         --dataset "$dataset" \
         --num_samples 1000 \
         --output_dir "$OUTPUT_DIR" \
         --config "$CONFIG" \
         --checkpoint_interval 100 \
         --engine native \
-        2>&1 | tee -a "$MAIN_LOG"
+        > "$DATASET_LOG" 2>&1 &
 
-    EXIT_CODE=${PIPESTATUS[0]}
+    DATASET_PID=$!
+    log "    PID: $DATASET_PID"
+
+    wait $DATASET_PID
+    EXIT_CODE=$?
+
     DATASET_END=$(date +%s)
     ELAPSED=$(( (DATASET_END - DATASET_START) / 60 ))
 
