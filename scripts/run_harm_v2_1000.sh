@@ -3,36 +3,53 @@
 # Run all 3 dataset evaluations with harm_dimensions_v2, 1000 samples each
 #
 # Usage:
-#   bash scripts/run_harm_v2_1000.sh
-#   bash scripts/run_harm_v2_1000.sh --dataset pubmedqa   # single dataset
+#   bash scripts/run_harm_v2_1000.sh --gpu H100
+#   bash scripts/run_harm_v2_1000.sh --gpu H100 --dataset pubmedqa
+#   bash scripts/run_harm_v2_1000.sh --gpu GB10
 #
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
-OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2"
-CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
 PYTHON="/home/puertao/.conda/envs/vllm-gemma/bin/python"
 LOGS_DIR="$REPO_ROOT/logs"
-
-mkdir -p "$OUTPUT_DIR" "$LOGS_DIR"
-
-# Parse optional --dataset filter
+GPU_LABEL=""
 DATASET_FILTER=""
+
+# Parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --gpu)
+            GPU_LABEL="$2"
+            shift 2
+            ;;
         --dataset)
             DATASET_FILTER="$2"
             shift 2
             ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--dataset pubmedqa|medqa|medmcqa]"
+            echo "Usage: $0 --gpu <H100|GB10> [--dataset pubmedqa|medqa|medmcqa]"
             exit 1
             ;;
     esac
 done
+
+if [[ -z "$GPU_LABEL" ]]; then
+    echo "ERROR: --gpu flag is required. Use --gpu H100 or --gpu GB10"
+    exit 1
+fi
+
+if [[ "$GPU_LABEL" == "GB10" ]]; then
+    CONFIG="$REPO_ROOT/config/vllm_jury_config_gb10.yaml"
+else
+    CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
+fi
+
+OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/$GPU_LABEL"
+
+mkdir -p "$OUTPUT_DIR" "$LOGS_DIR"
 
 if [[ -n "$DATASET_FILTER" ]]; then
     DATASETS=("$DATASET_FILTER")
@@ -41,7 +58,7 @@ else
 fi
 
 echo "=============================================="
-echo "harm_dimensions_v2 — 1000-sample evaluation"
+echo "harm_dimensions_v2 — 1000-sample evaluation [$GPU_LABEL]"
 echo "=============================================="
 echo "Datasets : ${DATASETS[*]}"
 echo "Samples  : 1000 each"
