@@ -4,7 +4,8 @@
 # Datasets run one after another to avoid GPU OOM.
 #
 # Usage:
-#   bash scripts/run_harm_v2_sequential.sh
+#   bash scripts/run_harm_v2_sequential.sh --gpu H100
+#   bash scripts/run_harm_v2_sequential.sh --gpu GB10
 #
 # Monitor:
 #   tail -f logs/harm_v2_sequential.log
