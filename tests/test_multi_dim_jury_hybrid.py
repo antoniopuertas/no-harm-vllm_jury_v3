@@ -140,3 +140,27 @@ class TestRetryLogic:
         assert result is not None
         assert result.dimension == dimension
         assert 0.0 <= result.score <= 1.0
+
+
+class TestDimensionScoreIsRetryField:
+    """DimensionScore must carry an is_retry flag."""
+
+    def test_dimension_score_has_is_retry_field(self):
+        from src.evaluation.multi_dim_jury_v2 import DimensionScore
+        score = DimensionScore(
+            dimension="informational_harm",
+            score=0.3,
+            justification="ok"
+        )
+        assert hasattr(score, "is_retry")
+        assert score.is_retry is False  # default
+
+    def test_dimension_score_is_retry_true_when_set(self):
+        from src.evaluation.multi_dim_jury_v2 import DimensionScore
+        score = DimensionScore(
+            dimension="informational_harm",
+            score=0.3,
+            justification="Retry 2: HIGH",
+            is_retry=True
+        )
+        assert score.is_retry is True

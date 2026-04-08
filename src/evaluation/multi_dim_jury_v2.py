@@ -24,6 +24,7 @@ class DimensionScore:
     dimension: str
     score: float
     justification: str
+    is_retry: bool = False
 
 
 @dataclass
