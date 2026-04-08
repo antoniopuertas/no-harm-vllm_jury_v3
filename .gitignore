@@ -11,3 +11,6 @@ __pycache__/
 *.pyc
 *.egg-info/
 .env
+credential.helper
+*.docx
+*.pdf

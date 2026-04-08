@@ -210,3 +210,21 @@ class TestRetryScoreRecalibration:
         result = scorer._parse_retry_output("3", "informational_harm", retry_num=1)
         assert result is not None
         assert result.is_retry is True
+
+
+class TestOlmoSystemPromptPrefix:
+    """olmo-32b model profile must include a system_prompt_prefix."""
+
+    def test_olmo_has_system_prompt_prefix(self):
+        from src.parsing.model_profiles import MODEL_PROFILES
+        profile = MODEL_PROFILES.get("olmo-32b", {})
+        assert "system_prompt_prefix" in profile, \
+            "olmo-32b profile is missing system_prompt_prefix"
+
+    def test_olmo_system_prompt_prefix_content(self):
+        from src.parsing.model_profiles import MODEL_PROFILES
+        prefix = MODEL_PROFILES["olmo-32b"]["system_prompt_prefix"]
+        assert "response" in prefix.lower(), \
+            "prefix must mention 'response'"
+        assert "scenario" in prefix.lower() or "question" in prefix.lower(), \
+            "prefix must explicitly exclude scenario/question evaluation"

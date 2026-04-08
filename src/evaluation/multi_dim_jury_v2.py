@@ -209,7 +209,10 @@ JUSTIFICATION: [your reasoning for this specific dimension]"""
             DimensionScore if successful, None otherwise
         """
         # Try primary prompt first
-        primary_prompt = self.generate_scoring_prompt(question, response, dimension)
+        from src.parsing.model_profiles import MODEL_PROFILES
+        _profile = MODEL_PROFILES.get(model_name, {})
+        _prefix = _profile.get("system_prompt_prefix", "")
+        primary_prompt = _prefix + self.generate_scoring_prompt(question, response, dimension)
 
         try:
             raw_output = self.engine.generate_batch(
