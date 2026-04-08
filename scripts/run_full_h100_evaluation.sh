@@ -21,9 +21,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
 PYTHON="/home/puertao/.conda/envs/vllm-gemma/bin/python"
 CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
-OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/H100"
+OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/H100_v2"
 LOGS_DIR="$REPO_ROOT/logs"
-MAIN_LOG="$LOGS_DIR/h100_full_eval_$(date +%Y%m%d_%H%M%S).log"
+MAIN_LOG="$LOGS_DIR/h100_v2_full_eval_$(date +%Y%m%d_%H%M%S).log"
 
 # Parse optional --dataset filter
 DATASET_FILTER=""
@@ -54,7 +54,7 @@ log() {
 }
 
 log "================================================"
-log "harm_dimensions_v2 — H100 full evaluation"
+log "harm_dimensions_v2 — H100_v2 full evaluation (post-fix re-run)"
 log "Engine   : native vLLM (no Docker)"
 log "Datasets : ${DATASETS[*]}"
 log "Samples  : 1000 each"
