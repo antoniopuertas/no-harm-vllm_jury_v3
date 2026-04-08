@@ -208,6 +208,18 @@ class VLLMEngine:
             f"(up to {SERVER_READY_TIMEOUT}s) ..."
         )
         if not _wait_for_server(base_url):
+            # Capture container logs before teardown for diagnosis
+            try:
+                log_result = subprocess.run(
+                    ["docker", "logs", container_name],
+                    capture_output=True, text=True, timeout=10
+                )
+                logger.error(
+                    f"[VLLMEngine] Container logs for '{container_name}':\n"
+                    f"{log_result.stdout[-3000:]}\n{log_result.stderr[-1000:]}"
+                )
+            except Exception as log_err:
+                logger.warning(f"[VLLMEngine] Could not capture container logs: {log_err}")
             self._stop_container(container_name)
             raise RuntimeError(
                 f"vLLM server for '{model_name}' did not become ready "

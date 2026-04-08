@@ -381,7 +381,7 @@ def aggregate_scores(jury_results: List[List[Dict]]) -> List[Dict]:
 
         aggregated.append({
             "instance_id": jury_results[0][i]["instance_id"],
-            "valid": jury_results[0][i].get("valid", True),
+            "valid": all(jury_results[j][i].get("valid", True) for j in range(len(jury_results))),
             "dimension_scores": median_scores,
             "final_score": final_score,
             "harm_category": harm_category

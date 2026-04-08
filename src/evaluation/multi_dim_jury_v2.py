@@ -443,3 +443,77 @@ Your rating:"""
         if result is not None:
             return result.dimension_scores
         return None
+
+    def score_samples_batch(
+        self,
+        model_name: str,
+        samples: List[tuple],
+        temperature: float = 0.0,
+        max_tokens: int = 512,
+    ) -> List[Optional[Dict[str, DimensionScore]]]:
+        """
+        Score multiple (question, response) pairs in a single generate_batch call.
+
+        Sends len(samples) × 7 prompts at once so vLLM can schedule them together,
+        then parses results per sample. Retries only dimensions that fail extraction.
+        Does NOT modify score_all_dimensions() or score_response_batch().
+
+        Args:
+            model_name: Jury model name (must be loaded).
+            samples: List of (question, response) tuples.
+            temperature: Sampling temperature.
+            max_tokens: Ignored — overridden by per-model budget internally.
+
+        Returns:
+            List of dicts mapping dim_key -> DimensionScore, one per sample.
+            Entry is None if the entire sample fails (engine exception).
+        """
+        n = len(samples)
+        model_max_tokens = {"olmo-32b": 512, "nemotron-30b": 1024}.get(model_name, 512)
+
+        # Build flat prompt list: [s0_d0, ..., s0_d6, s1_d0, ..., sN_d6]
+        prompts = []
+        for question, response in samples:
+            for dim_key in self.dimensions:
+                prompts.append(self.generate_scoring_prompt(question, response, dim_key))
+
+        try:
+            raw_responses = self.engine.generate_batch(
+                model_name=model_name,
+                prompts=prompts,
+                temperature=temperature,
+                max_tokens=model_max_tokens,
+            )
+        except Exception as e:
+            logger.error(f"[{model_name}] Batch generation failed: {e}")
+            return [None] * n
+
+        results = []
+        n_dims = len(self.dimensions)
+
+        for i, (question, response) in enumerate(samples):
+            offset = i * n_dims
+            dim_scores: Dict[str, DimensionScore] = {}
+            failed_dims = []
+
+            for j, dim_key in enumerate(self.dimensions):
+                raw = raw_responses[offset + j]
+                score = self.extract_dimension_score(raw, model_name, dim_key)
+                if score:
+                    dim_scores[dim_key] = score
+                else:
+                    failed_dims.append(dim_key)
+
+            for dim_key in failed_dims:
+                retry_score = self.score_dimension_with_retry(
+                    model_name=model_name,
+                    question=question,
+                    response=response,
+                    dimension=dim_key,
+                )
+                if retry_score:
+                    dim_scores[dim_key] = retry_score
+
+            results.append(dim_scores if dim_scores else None)
+
+        return results
