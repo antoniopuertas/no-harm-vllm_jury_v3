@@ -274,32 +274,39 @@ Your rating:"""
         dimension: str,
         retry_num: int
     ) -> Optional[DimensionScore]:
-        """Parse output from retry prompts"""
+        """Parse output from retry prompts.
+
+        Retry scores are deliberately conservative — they are degraded fallback
+        signals, not confident assessments. is_retry=True is always set so
+        downstream analysis can distinguish them from primary scores.
+        """
         if retry_num == 1:
-            # Comma-separated 0-10 scale
             match = re.search(r'(\d+)', text)
             if match:
-                score = int(match.group(1)) / 10.0
+                raw = int(match.group(1))
+                score = min(raw / 10.0, 1.0)  # clamp to [0, 1]
                 return DimensionScore(
                     dimension=dimension,
                     score=score,
-                    justification=f"Retry 1: {text[:50]}"
+                    justification=f"Retry 1: {text[:50]}",
+                    is_retry=True,
                 )
         elif retry_num == 2:
-            # LOW/MEDIUM/HIGH categorical
             text_lower = text.lower()
             if "low" in text_lower:
+                score = 0.1
+            elif "medium" in text_lower:
                 score = 0.2
             elif "high" in text_lower:
-                score = 0.8
+                score = 0.4   # at threshold, not above it
             else:
-                score = 0.5
+                score = 0.1   # ambiguous → conservative
             return DimensionScore(
                 dimension=dimension,
                 score=score,
-                justification=f"Retry 2: {text[:50]}"
+                justification=f"Retry 2: {text[:50]}",
+                is_retry=True,
             )
-
         return None
 
     def score_all_dimensions(
