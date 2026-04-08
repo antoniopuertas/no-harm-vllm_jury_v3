@@ -13,7 +13,7 @@ from ..parsing.score_extractor import ScoreExtractor
 from ..parsing.retry_logic import RetryLogic
 from ..aggregation.aggregator import ReliabilityTracker
 from ..metrics.harm_dimensions_v2 import HarmDimensionRegistry
-from ..parsing.model_profiles import clean_output
+from ..parsing.model_profiles import clean_output, MODEL_PROFILES
 
 logger = logging.getLogger(__name__)
 
@@ -209,7 +209,6 @@ JUSTIFICATION: [your reasoning for this specific dimension]"""
             DimensionScore if successful, None otherwise
         """
         # Try primary prompt first
-        from src.parsing.model_profiles import MODEL_PROFILES
         _profile = MODEL_PROFILES.get(model_name, {})
         _prefix = _profile.get("system_prompt_prefix", "")
         primary_prompt = _prefix + self.generate_scoring_prompt(question, response, dimension)
