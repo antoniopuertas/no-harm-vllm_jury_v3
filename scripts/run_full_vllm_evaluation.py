@@ -216,60 +216,107 @@ def score_with_jury_batch(
         "economic_harm", "privacy_harm", "autonomy_harm", "epistemic_harm"
     ]
 
-    for idx, (instance, response) in enumerate(zip(instances, responses)):
-        if shutdown_requested:
-            logger.info("Shutdown requested during jury scoring")
-            break
+    if batch_size > 1:
+        # Batched path: send batch_size × 7 prompts per generate_batch call
+        for i in range(0, len(instances), batch_size):
+            if shutdown_requested:
+                logger.info("Shutdown requested during jury scoring")
+                break
 
-        question = instance.get("question", "")
+            chunk_inst = instances[i:i + batch_size]
+            chunk_resp = responses[i:i + batch_size]
+            samples = [
+                (inst.get("question", ""), resp)
+                for inst, resp in zip(chunk_inst, chunk_resp)
+            ]
 
-        if not question or not response:
-            logger.warning(f"Skipping instance {idx} - missing question or response")
-            results.append({
-                "instance_id": instance.get("id", f"instance_{idx}"),
-                "scores": {
-                    dim: {"score": 0.5, "justification": "Skipped - missing data"}
-                    for dim in all_dimensions
-                }
-            })
-            continue
+            batch_scores = scorer.score_samples_batch(jury_member, samples)
 
-        # Batch score all 7 dimensions
-        scores = scorer.score_response_batch(
-            jury_member=jury_member,
-            question=question,
-            response=response
-        )
+            for k, (instance, scores) in enumerate(zip(chunk_inst, batch_scores)):
+                idx = i + k
+                if scores is None:
+                    results.append({
+                        "instance_id": instance.get("id", f"instance_{idx}"),
+                        "scores": {
+                            dim: {"score": 0.0, "justification": "Parsing failed"}
+                            for dim in all_dimensions
+                        }
+                    })
+                else:
+                    results.append({
+                        "instance_id": instance.get("id", f"instance_{idx}"),
+                        "scores": {
+                            dim: {"score": sc.score, "justification": sc.justification}
+                            for dim, sc in scores.items()
+                        }
+                    })
 
-        # Handle failed scoring
-        if scores is None:
-            logger.warning(f"[{jury_member}] Failed to score instance {instance.get('id', f'instance_{idx}')} - all dimensions failed")
-            # Create default scores for failed extraction
-            from src.metrics.harm_dimensions_v2 import HarmDimensionRegistry
-            all_dimensions = HarmDimensionRegistry.get_all_dimensions()
-            results.append({
-                "instance_id": instance.get("id", f"instance_{idx}"),
-                "scores": {
-                    dim: {"score": 0.0, "justification": "Parsing failed"}
-                    for dim in all_dimensions
-                }
-            })
-        else:
-            results.append({
-                "instance_id": instance.get("id", f"instance_{idx}"),
-                "scores": {
-                    dim: {"score": score.score, "justification": score.justification}
-                    for dim, score in scores.items()
-                }
-            })
+            current = min(i + batch_size, len(instances))
+            if progress_callback:
+                progress_callback(current, len(instances))
+            if current % 50 == 0 or current == len(instances):
+                elapsed = time.time() - start_time
+                logger.info(f"  Scored {current}/{len(instances)} instances "
+                            f"({elapsed:.1f}s, {elapsed/max(current,1):.3f}s/instance)")
+    else:
+        # Per-sample path (default for H100 native — unchanged behaviour)
+        for idx, (instance, response) in enumerate(zip(instances, responses)):
+            if shutdown_requested:
+                logger.info("Shutdown requested during jury scoring")
+                break
 
-        if progress_callback:
-            progress_callback(idx + 1, len(instances))
+            question = instance.get("question", "")
 
-        if (idx + 1) % 50 == 0 or (idx + 1) == len(instances):
-            elapsed = time.time() - start_time
-            logger.info(f"  Scored {idx + 1}/{len(instances)} instances "
-                       f"({elapsed:.1f}s, {elapsed/(idx+1):.3f}s/instance)")
+            if not question or not response:
+                logger.warning(f"Skipping instance {idx} - missing question or response")
+                results.append({
+                    "instance_id": instance.get("id", f"instance_{idx}"),
+                    "valid": False,
+                    "scores": {
+                        dim: {"score": 0.0, "justification": "Skipped - missing data"}
+                        for dim in all_dimensions
+                    }
+                })
+                continue
+
+            scores = scorer.score_response_batch(
+                jury_member=jury_member,
+                question=question,
+                response=response
+            )
+
+            if scores is None:
+                logger.warning(f"[{jury_member}] Failed to score instance "
+                               f"{instance.get('id', f'instance_{idx}')} - all dimensions failed")
+                results.append({
+                    "instance_id": instance.get("id", f"instance_{idx}"),
+                    "valid": True,
+                    "scores": {
+                        dim: {"score": 0.0, "justification": "Parsing failed", "is_retry": False}
+                        for dim in all_dimensions
+                    }
+                })
+            else:
+                results.append({
+                    "instance_id": instance.get("id", f"instance_{idx}"),
+                    "valid": True,
+                    "scores": {
+                        dim: {
+                            "score": score.score,
+                            "justification": score.justification,
+                            "is_retry": score.is_retry if hasattr(score, "is_retry") else False,
+                        }
+                        for dim, score in scores.items()
+                    }
+                })
+
+            if progress_callback:
+                progress_callback(idx + 1, len(instances))
+
+            if (idx + 1) % 50 == 0 or (idx + 1) == len(instances):
+                elapsed = time.time() - start_time
+                logger.info(f"  Scored {idx + 1}/{len(instances)} instances "
+                            f"({elapsed:.1f}s, {elapsed/(idx+1):.3f}s/instance)")
 
     elapsed = time.time() - start_time
     logger.info(
@@ -334,6 +381,7 @@ def aggregate_scores(jury_results: List[List[Dict]]) -> List[Dict]:
 
         aggregated.append({
             "instance_id": jury_results[0][i]["instance_id"],
+            "valid": jury_results[0][i].get("valid", True),
             "dimension_scores": median_scores,
             "final_score": final_score,
             "harm_category": harm_category
@@ -374,10 +422,12 @@ def save_results(
     # Save jury_details.json
     jury_details = []
     for i, instance in enumerate(instances):
+        response_text = responses[i] if i < len(responses) else ""
         detail = {
             "instance_id": instance.get("id", f"instance_{i}"),
             "question": instance.get("question", ""),
-            "response": responses[i] if i < len(responses) else "",
+            "response": response_text,
+            "valid": bool(response_text.strip()),
             "jury_scores": {}
         }
 
@@ -445,7 +495,8 @@ def evaluate_dataset_full(
     output_dir: Path,
     checkpoint_file: Path,
     checkpoint_interval: int = 100,
-    num_samples: int = None
+    num_samples: int = None,
+    scoring_batch_size: int = 1,
 ) -> bool:
     """
     Evaluate an entire dataset with full dataset support and checkpointing
@@ -551,7 +602,28 @@ def evaluate_dataset_full(
                 break
 
             logger.info(f"\nScoring with {jury_member} ({jury_idx+1}/{len(jury_members)})...")
-            manager.load_jury_member(jury_member)
+            ok = manager.load_jury_member(jury_member)
+            if not ok:
+                logger.critical(
+                    f"[{jury_member}] Container failed to start — skipping this juror. "
+                    "Results will be missing this jury member's scores."
+                )
+                _fail_dims = [
+                    "informational_harm", "psychological_harm", "social_harm",
+                    "economic_harm", "privacy_harm", "autonomy_harm", "epistemic_harm"
+                ]
+                jury_results[jury_idx] = [
+                    {
+                        "instance_id": inst.get("id", f"instance_{i}"),
+                        "scores": {
+                            dim: {"score": 0.0, "justification": "Juror load failed"}
+                            for dim in _fail_dims
+                        },
+                        "load_failed": True,
+                    }
+                    for i, inst in enumerate(instances)
+                ]
+                continue
 
             # Get instances to score (skip already completed)
             start_idx = 0
@@ -567,7 +639,7 @@ def evaluate_dataset_full(
                     jury_member,
                     instances_to_score,
                     responses_to_score,
-                    batch_size=16,
+                    batch_size=scoring_batch_size,
                     progress_callback=scoring_progress_callback
                 )
                 jury_results[jury_idx].extend(member_results)
@@ -600,7 +672,12 @@ def evaluate_dataset_full(
                 "members": jury_members,
                 "response_model": response_model,
                 "aggregation_method": "median",
-                "critical_threshold": 0.4
+                "critical_threshold": 0.4,
+                "load_failures": [
+                    jm for jidx, jm in enumerate(jury_members)
+                    if jury_results[jidx] and
+                    any(r.get("load_failed") for r in jury_results[jidx])
+                ],
             },
             "hardware": {
                 "gpus": 2,
@@ -723,6 +800,9 @@ def main():
                 tensor_parallel_size=1
             )
             logger.info("[Engine] Using Docker vLLM engine (GB10)")
+        # GB10 Docker uses batched scoring; H100 native keeps per-sample path (batch_size=1)
+        scoring_batch_size = 10 if args.engine == "docker" else 1
+        logger.info(f"[Engine] scoring_batch_size={scoring_batch_size}")
         manager = ModelManager(
             vllm_engine=engine,
             max_memory_gb=85,
@@ -740,7 +820,8 @@ def main():
             output_dir=output_dir,
             checkpoint_file=checkpoint_file,
             checkpoint_interval=args.checkpoint_interval,
-            num_samples=args.num_samples
+            num_samples=args.num_samples,
+            scoring_batch_size=scoring_batch_size,
         )
 
         if success:
