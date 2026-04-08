@@ -272,32 +272,54 @@ class VLLMEngine:
 
         def _single_request(args):
             i, prompt = args
-            try:
-                messages = (
-                    [
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user",   "content": prompt},
-                    ]
-                    if is_ministral
-                    else [{"role": "user", "content": prompt}]
-                )
-                completion = state.client.chat.completions.create(
-                    model=state.served_name,
-                    messages=messages,
-                    temperature=temperature,
-                    max_tokens=max_tokens,
-                    top_p=top_p,
-                )
-                text = completion.choices[0].message.content or ""
-                if not text.strip():
-                    logger.warning(
-                        f"[VLLMEngine] Empty response for prompt #{i}: "
-                        f"{prompt[:200]}..."
+            messages = (
+                [
+                    {"role": "system", "content": "You are a helpful assistant."},
+                    {"role": "user",   "content": prompt},
+                ]
+                if is_ministral
+                else [{"role": "user", "content": prompt}]
+            )
+            max_attempts = 4  # 1 primary + 3 retries
+            backoff = [1, 2, 4]
+            for attempt in range(max_attempts):
+                try:
+                    completion = state.client.chat.completions.create(
+                        model=state.served_name,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                        top_p=top_p,
                     )
-                return i, text
-            except Exception as e:
-                logger.error(f"[VLLMEngine] Request failed for prompt #{i}: {e}")
-                return i, ""
+                    text = completion.choices[0].message.content or ""
+                    if text.strip():
+                        return i, text
+                    if attempt < max_attempts - 1:
+                        logger.warning(
+                            f"[VLLMEngine] Empty response for prompt #{i} "
+                            f"(attempt {attempt + 1}/{max_attempts}), retrying..."
+                        )
+                        time.sleep(backoff[attempt])
+                    else:
+                        logger.warning(
+                            f"[VLLMEngine] Empty response for prompt #{i} "
+                            f"after {max_attempts} attempts — giving up"
+                        )
+                        return i, ""
+                except Exception as e:
+                    if attempt < max_attempts - 1:
+                        logger.warning(
+                            f"[VLLMEngine] Request failed for prompt #{i} "
+                            f"(attempt {attempt + 1}/{max_attempts}): {e}, retrying..."
+                        )
+                        time.sleep(backoff[attempt])
+                    else:
+                        logger.error(
+                            f"[VLLMEngine] Request failed for prompt #{i} "
+                            f"after {max_attempts} attempts: {e}"
+                        )
+                        return i, ""
+            return i, ""  # unreachable, satisfies linter
 
         # Send all prompts concurrently — vLLM batches them server-side
         results = [None] * len(prompts)

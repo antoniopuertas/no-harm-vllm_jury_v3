@@ -571,6 +571,57 @@ class TestVLLMEngineErrorHandling:
         # Verify retry was attempted for failures
         assert mock_retry.call_count == 2  # Called for 2 failures
 
+    def test_generate_batch_retries_on_empty_response(self):
+        """_single_request should retry up to 3 times before returning empty string."""
+        import time as time_module
+        from unittest.mock import patch, Mock
+
+        engine = VLLMEngine.__new__(VLLMEngine)
+        engine._states = {}
+
+        mock_state = Mock()
+        mock_state.served_name = "test-model"
+        mock_completion_empty = Mock()
+        mock_completion_empty.choices = [Mock()]
+        mock_completion_empty.choices[0].message.content = ""
+        mock_completion_ok = Mock()
+        mock_completion_ok.choices = [Mock()]
+        mock_completion_ok.choices[0].message.content = "actual response"
+
+        mock_state.client.chat.completions.create.side_effect = [
+            mock_completion_empty,   # attempt 1 — empty
+            mock_completion_empty,   # attempt 2 — empty
+            mock_completion_ok,      # attempt 3 — success
+        ]
+        engine._states["test-model"] = mock_state
+
+        with patch("time.sleep"):
+            results = engine.generate_batch("test-model", ["hello"])
+
+        assert results[0] == "actual response"
+        assert mock_state.client.chat.completions.create.call_count == 3
+
+    def test_generate_batch_returns_empty_after_all_retries_fail(self):
+        """After 3 retries all returning empty, should return empty string."""
+        from unittest.mock import patch, Mock
+
+        engine = VLLMEngine.__new__(VLLMEngine)
+        engine._states = {}
+
+        mock_state = Mock()
+        mock_state.served_name = "test-model"
+        mock_completion_empty = Mock()
+        mock_completion_empty.choices = [Mock()]
+        mock_completion_empty.choices[0].message.content = ""
+        mock_state.client.chat.completions.create.return_value = mock_completion_empty
+        engine._states["test-model"] = mock_state
+
+        with patch("time.sleep"):
+            results = engine.generate_batch("test-model", ["hello"])
+
+        assert results[0] == ""
+        assert mock_state.client.chat.completions.create.call_count == 4  # 1 primary + 3 retries
+
 
 class TestNativeVLLMEngineBasics:
     """Test NativeVLLMEngine basic functionality with mocking"""
