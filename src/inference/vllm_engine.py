@@ -22,7 +22,7 @@ VLLM_IMAGE           = "nvcr.io/nvidia/vllm:26.01-py3"
 HF_CACHE_HOST        = "/home/neo/.cache/huggingface/hub"
 HF_CACHE_CONTAINER   = "/home/neo/.cache/huggingface/hub"
 HF_TOKEN_PATH        = "/root/.cache/huggingface/token"
-SERVER_READY_TIMEOUT = 600   # seconds to wait for server to come up
+SERVER_READY_TIMEOUT = 1800  # seconds to wait for server to come up (14B+ models on slower GPUs need >10min)
 SERVER_READY_POLL    = 5     # seconds between health-check polls
 BASE_PORT            = 8000  # first port; each concurrent model gets base+n
 
