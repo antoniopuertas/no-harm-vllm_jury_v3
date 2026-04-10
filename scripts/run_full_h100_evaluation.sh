@@ -6,10 +6,12 @@
 #
 # Usage:
 #   bash scripts/run_full_h100_evaluation.sh
-#   bash scripts/run_full_h100_evaluation.sh --dataset pubmedqa   # single dataset
+#   bash scripts/run_full_h100_evaluation.sh --dataset pubmedqa         # single dataset
+#   bash scripts/run_full_h100_evaluation.sh --output_dir path/to/dir   # custom output dir
 #
 # Recommended launch (detach from terminal entirely):
-#   nohup bash scripts/run_full_h100_evaluation.sh > logs/h100_launch.log 2>&1 &
+#   nohup bash scripts/run_full_h100_evaluation.sh --output_dir data/results/vllm/harm_dimensions_v2/H100_v3 \
+#       > logs/h100_v3_launch.log 2>&1 &
 #   echo "PID: $!"
 #
 # Monitor:
@@ -23,9 +25,8 @@ PYTHON="/home/puertao/.conda/envs/vllm-gemma/bin/python"
 CONFIG="$REPO_ROOT/config/vllm_jury_config.yaml"
 OUTPUT_DIR="$REPO_ROOT/data/results/vllm/harm_dimensions_v2/H100_v2"
 LOGS_DIR="$REPO_ROOT/logs"
-MAIN_LOG="$LOGS_DIR/h100_v2_full_eval_$(date +%Y%m%d_%H%M%S).log"
 
-# Parse optional --dataset filter
+# Parse optional --dataset filter and --output_dir
 DATASET_FILTER=""
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -33,13 +34,25 @@ while [[ $# -gt 0 ]]; do
             DATASET_FILTER="$2"
             shift 2
             ;;
+        --output_dir)
+            # Accept absolute or REPO_ROOT-relative paths
+            if [[ "$2" = /* ]]; then
+                OUTPUT_DIR="$2"
+            else
+                OUTPUT_DIR="$REPO_ROOT/$2"
+            fi
+            shift 2
+            ;;
         *)
             echo "Unknown option: $1"
-            echo "Usage: $0 [--dataset pubmedqa|medqa|medmcqa]"
+            echo "Usage: $0 [--dataset pubmedqa|medqa|medmcqa] [--output_dir PATH]"
             exit 1
             ;;
     esac
 done
+
+RUN_NAME="$(basename "$OUTPUT_DIR")"
+MAIN_LOG="$LOGS_DIR/${RUN_NAME}_full_eval_$(date +%Y%m%d_%H%M%S).log"
 
 if [[ -n "$DATASET_FILTER" ]]; then
     DATASETS=("$DATASET_FILTER")
@@ -54,7 +67,7 @@ log() {
 }
 
 log "================================================"
-log "harm_dimensions_v2 — H100_v2 full evaluation (post-fix re-run)"
+log "harm_dimensions_v2 — $RUN_NAME full evaluation"
 log "Engine   : native vLLM (no Docker)"
 log "Datasets : ${DATASETS[*]}"
 log "Samples  : 1000 each"
@@ -70,7 +83,7 @@ for dataset in "${DATASETS[@]}"; do
     log ""
     log ">>> Starting: $dataset"
     DATASET_START=$(date +%s)
-    DATASET_LOG="$LOGS_DIR/h100_${dataset}_$(date +%Y%m%d_%H%M%S).log"
+    DATASET_LOG="$LOGS_DIR/${RUN_NAME}_${dataset}_$(date +%Y%m%d_%H%M%S).log"
     log "    Log: $DATASET_LOG"
 
     nohup "$PYTHON" "$SCRIPT_DIR/run_full_vllm_evaluation.py" \
