@@ -131,7 +131,7 @@ Supported datasets: `medmcqa`, `pubmedqa`, `medqa`
 
 ## Configuration
 
-All settings live in `config.yaml`:
+All settings live in `config/vllm_jury_config.yaml`:
 
 ```yaml
 # Harm classification thresholds (scores are 0.0–1.0)
@@ -215,7 +215,7 @@ Key differences from the H100 config:
 | GPUs | 2× H100 NVL | 1× GB10 |
 | Total VRAM | 190 GB | 96 GB unified |
 | `tensor_parallel_size` | 2 (large models) | 1 (all models) |
-| Engine | native (`--engine native`) | native (`--engine native`) |
+| Engine | native (`--engine native`) | docker (`--engine docker`) |
 | Model paths | NFS staging | `~/.cache/huggingface/hub/` |
 | Throughput | ~2–2.5 h / 1000 samples | ~42–48 h / 1000 samples |
 | vLLM version | `vllm==0.18.1` | `nvcr.io/nvidia/vllm:26.01-py3` |
@@ -223,7 +223,7 @@ Key differences from the H100 config:
 > **Note on throughput:** The GB10 is significantly slower per-sample because models are loaded sequentially (one at a time) and the unified memory architecture has lower peak throughput for large batch inference compared to dedicated H100 HBM. The retry cascade (qwen2.5-coder-7b in particular) can add significant overhead on some datasets.
 
 ```bash
-# Run all datasets sequentially on GB10 (native engine)
+# Run all datasets sequentially on GB10 (docker engine)
 bash scripts/run_harm_v2_sequential.sh --gpu GB10
 
 # Run a single dataset
@@ -231,6 +231,15 @@ bash scripts/run_harm_v2_1000.sh --gpu GB10 --dataset medmcqa
 
 # Re-run specific failed datasets
 bash scripts/run_medqa_medmcqa.sh --gpu GB10
+
+# Full 5-juror run, 1000 samples per dataset (background)
+nohup bash scripts/run_1000_gb10.sh > logs/gb10_5juror_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+# 4-juror run without gemma3-27b (background)
+nohup bash scripts/run_1000_no_gemma.sh > logs/no_gemma_1000_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+# Run only gemma3-27b scoring on existing 4-juror results, then merge to 5-juror (background)
+nohup bash scripts/run_gemma_merge.sh > logs/gemma_merge_$(date +%Y%m%d_%H%M%S).log 2>&1 &
 ```
 
 ---
