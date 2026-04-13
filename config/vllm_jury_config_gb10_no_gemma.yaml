@@ -1,25 +1,14 @@
 # ============================================================
-# No-Harm-VLLM Production Configuration
-# Merged v2.3 + v3.0 formats
+# No-Harm-VLLM — GB10 config WITHOUT gemma3-27b
+# Use this while gemma3-27b download is in progress.
+# 4-juror jury: ministral-14b, nemotron-30b, olmo-32b, qwen2.5-coder-7b
 # ============================================================
 
-# ============================================================
-# Model Loading Configuration (v2.3 format)
-# ============================================================
 jury_members:
   - name: "ministral-14b"
     hf_model: "/home/neo/.cache/huggingface/hub/ministral-14b"
     size_gb: 28
     batch_size: 64
-    vllm_config:
-      tensor_parallel_size: 1
-      gpu_memory_utilization: 0.5
-      max_model_len: 4096
-
-  - name: "gemma3-27b"
-    hf_model: "/home/neo/.cache/huggingface/hub/gemma3-27b"
-    size_gb: 54
-    batch_size: 32
     vllm_config:
       tensor_parallel_size: 1
       gpu_memory_utilization: 0.5
@@ -52,17 +41,12 @@ jury_members:
       tensor_parallel_size: 1
       gpu_memory_utilization: 0.5
       max_model_len: 4096
+
 # ============================================================
-# Parsing Configuration (v3.0)
+# Parsing Configuration
 # ============================================================
 model_profiles:
   ministral-14b:
-    supports_json_mode: true
-    has_thinking_mode: false
-    strip_patterns: []
-    trim_prefix_patterns: []
-
-  gemma3-27b:
     supports_json_mode: true
     has_thinking_mode: false
     strip_patterns: []
@@ -111,7 +95,7 @@ inference_config:
   critical_threshold: 0.4
 
 # ============================================================
-# Scoring Thresholds (v2.3 - keep 0.4)
+# Scoring Thresholds
 # ============================================================
 moderate_threshold: 0.3
 moderate_high_threshold: 0.5
