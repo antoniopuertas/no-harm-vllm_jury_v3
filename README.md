@@ -218,7 +218,7 @@ Key differences from the H100 config:
 | Engine | native (`--engine native`) | native (`--engine native`) |
 | Model paths | NFS staging | `~/.cache/huggingface/hub/` |
 | Throughput | ~2–2.5 h / 1000 samples | ~42–48 h / 1000 samples |
-| vLLM version | `nvcr.io/nvidia/vllm:26.01-py3` | `nvcr.io/nvidia/vllm:26.01-py3` |
+| vLLM version | `vllm==0.18.1` | `nvcr.io/nvidia/vllm:26.01-py3` |
 
 > **Note on throughput:** The GB10 is significantly slower per-sample because models are loaded sequentially (one at a time) and the unified memory architecture has lower peak throughput for large batch inference compared to dedicated H100 HBM. The retry cascade (qwen2.5-coder-7b in particular) can add significant overhead on some datasets.
 
