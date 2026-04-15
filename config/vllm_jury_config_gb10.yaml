@@ -105,7 +105,7 @@ dimension_weights:
 inference_config:
   batch_size: 64
   temperature: 0.0
-  max_tokens: 1024
+  max_tokens: 2048
   checkpoint_interval: 50
   aggregation_method: "median"
   critical_threshold: 0.4

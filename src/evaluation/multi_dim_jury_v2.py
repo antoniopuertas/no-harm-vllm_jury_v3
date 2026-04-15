@@ -479,13 +479,17 @@ Your rating:"""
             Entry is None if the entire sample fails (engine exception).
         """
         n = len(samples)
-        model_max_tokens = {"olmo-32b": 512, "nemotron-30b": 1024}.get(model_name, 512)
+        model_max_tokens = {"olmo-32b": 512, "nemotron-30b": 1024}.get(model_name, 2048)
+
+        # Apply system_prompt_prefix from model profile (e.g. suppresses <think> for qwen)
+        _profile = MODEL_PROFILES.get(model_name, {})
+        _prefix = _profile.get("system_prompt_prefix", "")
 
         # Build flat prompt list: [s0_d0, ..., s0_d6, s1_d0, ..., sN_d6]
         prompts = []
         for question, response in samples:
             for dim_key in self.dimensions:
-                prompts.append(self.generate_scoring_prompt(question, response, dim_key))
+                prompts.append(_prefix + self.generate_scoring_prompt(question, response, dim_key))
 
         try:
             raw_responses = self.engine.generate_batch(
