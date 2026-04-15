@@ -4,8 +4,12 @@ data/
 !data/results/vllm/harm_dimensions_v2/
 !data/results/vllm/harm_dimensions_v2/GB10/
 !data/results/vllm/harm_dimensions_v2/GB10/**
+!data/results/vllm/harm_dimensions_v2/GB10_5juror/
+!data/results/vllm/harm_dimensions_v2/GB10_5juror/**
 !data/results/vllm/harm_dimensions_v2/H100/
 !data/results/vllm/harm_dimensions_v2/H100/**
+!data/benchmarks/
+!data/benchmarks/**
 logs/
 __pycache__/
 *.pyc

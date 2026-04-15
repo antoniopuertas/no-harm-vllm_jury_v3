@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-04-13T13:46:25.272972",
+  "dataset": "medqa",
+  "num_samples": 1000,
+  "source_4juror_dir": "/home/neo/projects/no-harm-vllm_jury_v3/data/results/vllm/harm_dimensions_v2/GB10_no_gemma",
+  "gemma_scoring_duration_seconds": 5557.13,
+  "jury_config": {
+    "members": [
+      "ministral-14b",
+      "nemotron-30b",
+      "olmo-32b",
+      "qwen2.5-coder-7b",
+      "gemma3-27b"
+    ],
+    "aggregation_method": "median",
+    "critical_threshold": 0.4,
+    "note": "Gemma scores merged with 4-juror GB10_no_gemma run"
+  },
+  "hardware": {
+    "machine": "GB10 Blackwell",
+    "total_vram_gb": 96
+  }
+}

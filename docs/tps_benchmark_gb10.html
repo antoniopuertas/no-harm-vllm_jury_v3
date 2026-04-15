@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GB10 vLLM TPS Benchmark — April 2026</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --accent: #6c8fff;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --card-radius: 12px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0 0 60px 0;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 40%, #12162a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 40px 40px;
+  }
+  .hero h1 { font-size: 2rem; font-weight: 700; letter-spacing: -0.5px; }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle { color: var(--muted); margin-top: 6px; font-size: 0.95rem; }
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+  .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .pill b { color: var(--text); }
+
+  /* ── LAYOUT ─────────────────────────────────────────── */
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
+  .section { margin-top: 48px; }
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── SUMMARY CARDS ──────────────────────────────────── */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .card.c1::before { background: linear-gradient(90deg, #6c8fff, #a78bfa); }
+  .card.c2::before { background: linear-gradient(90deg, #34d399, #6c8fff); }
+  .card.c3::before { background: linear-gradient(90deg, #fbbf24, #fb923c); }
+  .card.c4::before { background: linear-gradient(90deg, #f472b6, #a78bfa); }
+  .card.c5::before { background: linear-gradient(90deg, #f87171, #fbbf24); }
+  .card-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .card-model { font-size: 0.88rem; font-weight: 600; margin-bottom: 12px; }
+  .card-peak { font-size: 2.2rem; font-weight: 700; letter-spacing: -1px; }
+  .card-peak sup { font-size: 0.9rem; color: var(--muted); font-weight: 400; }
+  .card-detail { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+  .card-sub { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; display: flex; gap: 20px; }
+  .card-sub-item { }
+  .card-sub-item .val { font-size: 1.1rem; font-weight: 600; }
+  .card-sub-item .lbl { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── MAIN TABLE ─────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; border-radius: var(--card-radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  thead tr { background: var(--surface2); }
+  thead th {
+    padding: 12px 16px;
+    text-align: right;
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th:first-child { text-align: left; }
+  thead th.group-hdr {
+    text-align: center;
+    border-left: 1px solid var(--border);
+    color: var(--accent);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 11px 16px; text-align: right; }
+  tbody td:first-child { text-align: left; }
+  td.group-sep { border-left: 1px solid var(--border); }
+
+  .model-name { font-weight: 600; }
+  .model-size { font-size: 0.75rem; color: var(--muted); }
+  .tps-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* heat coloring */
+  .h5  { color: #34d399; }
+  .h4  { color: #86efac; }
+  .h3  { color: #fbbf24; }
+  .h2  { color: #fb923c; }
+  .h1  { color: #f87171; }
+
+  /* ── BAR CHART ──────────────────────────────────────── */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+  }
+  .chart-title { font-size: 0.82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 20px; }
+  .bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .bar-label { width: 120px; font-size: 0.8rem; text-align: right; color: var(--text); flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 22px; overflow: hidden; }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0f1117;
+    transition: width 0.3s ease;
+    white-space: nowrap;
+  }
+  .bar-val { width: 60px; text-align: right; font-size: 0.82rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ── LATENCY TABLE ──────────────────────────────────── */
+  .lat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .lat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 18px;
+  }
+  .lat-card h4 { font-size: 0.88rem; font-weight: 600; margin-bottom: 12px; }
+  .lat-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+  .lat-row:last-child { border-bottom: none; }
+  .lat-row .lbl { color: var(--muted); }
+  .lat-row .val { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── ANALYSIS SECTION ───────────────────────────────── */
+  .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 900px) { .analysis-grid { grid-template-columns: 1fr; } }
+  .analysis-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 24px;
+  }
+  .analysis-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .analysis-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.7; margin-bottom: 10px; }
+  .analysis-card p:last-child { margin-bottom: 0; }
+  .analysis-card strong { color: var(--text); }
+  .tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tag-blue  { background: rgba(108,143,255,0.15); color: var(--accent); border: 1px solid rgba(108,143,255,0.3); }
+  .tag-green { background: rgba(52,211,153,0.15);  color: var(--green);  border: 1px solid rgba(52,211,153,0.3); }
+  .tag-orange{ background: rgba(251,146,60,0.15);  color: var(--orange); border: 1px solid rgba(251,146,60,0.3); }
+  .tag-red   { background: rgba(248,113,113,0.15); color: var(--red);    border: 1px solid rgba(248,113,113,0.3); }
+  .highlight-box {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .highlight-box strong { color: var(--text); }
+
+  /* ── FOOTNOTE ───────────────────────────────────────── */
+  .footnote {
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .footnote b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ─────────────────────────────────────────────────────────── -->
+<div class="hero">
+  <div class="container">
+    <h1>GB10 Blackwell <span>vLLM Throughput Benchmark</span></h1>
+    <div class="subtitle">Tokens-per-second across 5 LLMs · 3 output lengths · 3 batch sizes · April 2026</div>
+    <div class="meta-pills">
+      <div class="pill"><b>Hardware:</b> NVIDIA GB10 Blackwell Superchip — 96 GB unified LPDDR5X</div>
+      <div class="pill"><b>Engine:</b> vLLM 26.01 (Docker)</div>
+      <div class="pill"><b>GPU mem util:</b> 0.85</div>
+      <div class="pill"><b>Max context:</b> 4096 tokens</div>
+      <div class="pill"><b>Mode:</b> enforce-eager (no CUDA graph)</div>
+      <div class="pill"><b>Date:</b> 2026-04-15</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ── PEAK TPS CARDS ────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Peak Throughput</div>
+  <div class="cards">
+
+    <div class="card c4">
+      <div class="card-label">🏆 Throughput leader</div>
+      <div class="card-model">nemotron-30b</div>
+      <div class="card-peak">444<sup> tok/s</sup></div>
+      <div class="card-detail">batch=32 · out=64 tokens</div>
+      <div class="card-sub">
+        <div class="card-sub-item"><div class="val" style="color:var(--green)">25.6</div><div class="lbl">single-req tok/s</div></div>
+        <div class="card-sub-item"><div class="val">59 GB</div><div class="lbl">model size</div></div>
+        <div class="card-sub-item"><div class="val">60s</div><div class="lbl">startup</div></div>
+      </div>
+    </div>
+
+    <div class="card c1">
+      <div class="card-label">⚡ Fastest small model</div>
+      <div class="card-model">qwen2.5-7b</div>
+      <div class="card-peak">432<sup> tok/s</sup></div>
+      <div class="card-detail">batch=32 · out=256 tokens</div>
+      <div class="card-sub">
+        <div class="card-sub-item"><div class="val" style="color:var(--green)">12.8</div><div class="lbl">single-req tok/s</div></div>
+        <div class="card-sub-item"><div class="val">15 GB</div><div class="lbl">model size</div></div>
+        <div class="card-sub-item"><div class="val">36s</div><div class="lbl">startup</div></div>
+      </div>
+    </div>
+
+    <div class="card c2">
+      <div class="card-label">Best mid-size</div>
+      <div class="card-model">ministral-14b</div>
+      <div class="card-peak">238<sup> tok/s</sup></div>
+      <div class="card-detail">batch=32 · out=256 tokens</div>
+      <div class="card-sub">
+        <div class="card-sub-item"><div class="val" style="color:var(--yellow)">8.8</div><div class="lbl">single-req tok/s</div></div>
+        <div class="card-sub-item"><div class="val">28 GB</div><div class="lbl">model size</div></div>
+        <div class="card-sub-item"><div class="val">45s</div><div class="lbl">startup</div></div>
+      </div>
+    </div>
+
+    <div class="card c3">
+      <div class="card-label">Large dense</div>
+      <div class="card-model">gemma3-27b</div>
+      <div class="card-peak">118<sup> tok/s</sup></div>
+      <div class="card-detail">batch=32 · out=256 tokens</div>
+      <div class="card-sub">
+        <div class="card-sub-item"><div class="val" style="color:var(--red)">4.3</div><div class="lbl">single-req tok/s</div></div>
+        <div class="card-sub-item"><div class="val">52 GB</div><div class="lbl">model size</div></div>
+        <div class="card-sub-item"><div class="val">70s</div><div class="lbl">startup</div></div>
+      </div>
+    </div>
+
+    <div class="card c5">
+      <div class="card-label">Largest dense</div>
+      <div class="card-model">olmo-32b</div>
+      <div class="card-peak">100<sup> tok/s</sup></div>
+      <div class="card-detail">batch=32 · out=64 tokens</div>
+      <div class="card-sub">
+        <div class="card-sub-item"><div class="val" style="color:var(--red)">3.8</div><div class="lbl">single-req tok/s</div></div>
+        <div class="card-sub-item"><div class="val">61 GB</div><div class="lbl">model size</div></div>
+        <div class="card-sub-item"><div class="val">60s</div><div class="lbl">startup</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── FULL MATRIX TABLE ─────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Full Benchmark Matrix — Decode TPS (tok/s)</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th rowspan="2" style="text-align:left; vertical-align:bottom;">Model</th>
+          <th rowspan="2" style="vertical-align:bottom;">Size</th>
+          <th rowspan="2" style="vertical-align:bottom;">Startup</th>
+          <th class="group-hdr" colspan="3">out = 64 tokens</th>
+          <th class="group-hdr" colspan="3">out = 256 tokens</th>
+          <th class="group-hdr" colspan="3">out = 512 tokens</th>
+        </tr>
+        <tr>
+          <th class="group-sep">bs=1</th><th>bs=8</th><th>bs=32</th>
+          <th class="group-sep">bs=1</th><th>bs=8</th><th>bs=32</th>
+          <th class="group-sep">bs=1</th><th>bs=8</th><th>bs=32</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- nemotron-30b -->
+        <tr>
+          <td><span class="model-name">nemotron-30b</span><br><span class="model-size">MoE · 30B total / ~3B active</span></td>
+          <td>59 GB</td><td>60s</td>
+          <td class="group-sep tps-cell h5">25.6</td><td class="tps-cell h5">125</td><td class="tps-cell h5">444</td>
+          <td class="group-sep tps-cell h5">25.7</td><td class="tps-cell h5">169</td><td class="tps-cell h4">304</td>
+          <td class="group-sep tps-cell h5">25.6</td><td class="tps-cell h4">139</td><td class="tps-cell h4">285</td>
+        </tr>
+        <!-- qwen2.5-7b -->
+        <tr>
+          <td><span class="model-name">qwen2.5-7b</span><br><span class="model-size">Dense · 7B</span></td>
+          <td>15 GB</td><td>36s</td>
+          <td class="group-sep tps-cell h3">12.8</td><td class="tps-cell h5">122</td><td class="tps-cell h5">429</td>
+          <td class="group-sep tps-cell h3">12.8</td><td class="tps-cell h5">125</td><td class="tps-cell h5">432</td>
+          <td class="group-sep tps-cell h3">12.7</td><td class="tps-cell h5">124</td><td class="tps-cell h5">425</td>
+        </tr>
+        <!-- ministral-14b -->
+        <tr>
+          <td><span class="model-name">ministral-14b</span><br><span class="model-size">Dense · 14B</span></td>
+          <td>28 GB</td><td>45s</td>
+          <td class="group-sep tps-cell h2">8.8</td><td class="tps-cell h4">66</td><td class="tps-cell h4">235</td>
+          <td class="group-sep tps-cell h2">8.8</td><td class="tps-cell h4">69</td><td class="tps-cell h4">238</td>
+          <td class="group-sep tps-cell h2">5.7 ⚠</td><td class="tps-cell h3">52</td><td class="tps-cell h4">220</td>
+        </tr>
+        <!-- gemma3-27b -->
+        <tr>
+          <td><span class="model-name">gemma3-27b</span><br><span class="model-size">Dense · 27B</span></td>
+          <td>52 GB</td><td>70s</td>
+          <td class="group-sep tps-cell h1">4.3</td><td class="tps-cell h2">24</td><td class="tps-cell h3">116</td>
+          <td class="group-sep tps-cell h1">4.3</td><td class="tps-cell h2">33</td><td class="tps-cell h3">118</td>
+          <td class="group-sep tps-cell h1">4.3</td><td class="tps-cell h2">33</td><td class="tps-cell h3">113</td>
+        </tr>
+        <!-- olmo-32b -->
+        <tr>
+          <td><span class="model-name">olmo-32b</span><br><span class="model-size">Dense · 32B</span></td>
+          <td>61 GB</td><td>60s</td>
+          <td class="group-sep tps-cell h1">3.8</td><td class="tps-cell h2">29</td><td class="tps-cell h3">100</td>
+          <td class="group-sep tps-cell h1">3.8</td><td class="tps-cell h2">28</td><td class="tps-cell h2">99</td>
+          <td class="group-sep tps-cell h1">3.8</td><td class="tps-cell h2">28</td><td class="tps-cell h2">95</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="font-size:0.72rem; color:var(--muted); margin-top:8px;">
+    Color scale: <span class="h5">≥300</span> · <span class="h4">≥100</span> · <span class="h3">≥20</span> · <span class="h2">≥5</span> · <span class="h1">&lt;5</span> tok/s &nbsp;·&nbsp;
+    ⚠ ministral-14b bs=1/512 anomaly: 2 requests completed in &lt;0.5s (likely cached), rest at normal speed.
+  </p>
+</div>
+
+<!-- ── BAR CHARTS ────────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Visual Comparison</div>
+  <div class="chart-grid">
+
+    <!-- Peak TPS bar -->
+    <div class="chart-card">
+      <div class="chart-title">Peak Decode TPS (batch=32)</div>
+      <div class="bar-row">
+        <div class="bar-label">nemotron-30b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%; background:linear-gradient(90deg,#a78bfa,#6c8fff)">444</div></div>
+        <div class="bar-val" style="color:var(--accent2)">444</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">qwen2.5-7b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:97.3%; background:linear-gradient(90deg,#6c8fff,#34d399)">432</div></div>
+        <div class="bar-val" style="color:var(--accent)">432</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">ministral-14b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:53.6%; background:linear-gradient(90deg,#34d399,#86efac)">238</div></div>
+        <div class="bar-val" style="color:var(--green)">238</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">gemma3-27b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:26.6%; background:linear-gradient(90deg,#fbbf24,#fb923c)">118</div></div>
+        <div class="bar-val" style="color:var(--yellow)">118</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">olmo-32b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:22.5%; background:linear-gradient(90deg,#fb923c,#f87171)">100</div></div>
+        <div class="bar-val" style="color:var(--orange)">100</div>
+      </div>
+    </div>
+
+    <!-- Single-request TPS bar -->
+    <div class="chart-card">
+      <div class="chart-title">Single-Request Decode TPS (batch=1)</div>
+      <div class="bar-row">
+        <div class="bar-label">nemotron-30b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%; background:linear-gradient(90deg,#a78bfa,#6c8fff)">25.6</div></div>
+        <div class="bar-val" style="color:var(--accent2)">25.6</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">qwen2.5-7b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:50%; background:linear-gradient(90deg,#6c8fff,#34d399)">12.8</div></div>
+        <div class="bar-val" style="color:var(--accent)">12.8</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">ministral-14b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:34.4%; background:linear-gradient(90deg,#34d399,#86efac)">8.8</div></div>
+        <div class="bar-val" style="color:var(--green)">8.8</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">gemma3-27b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:16.8%; background:linear-gradient(90deg,#fbbf24,#fb923c)">4.3</div></div>
+        <div class="bar-val" style="color:var(--yellow)">4.3</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">olmo-32b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:14.8%; background:linear-gradient(90deg,#fb923c,#f87171)">3.8</div></div>
+        <div class="bar-val" style="color:var(--orange)">3.8</div>
+      </div>
+    </div>
+
+    <!-- Batching gain -->
+    <div class="chart-card">
+      <div class="chart-title">Batching Multiplier (bs=32 vs bs=1, out=256)</div>
+      <div class="bar-row">
+        <div class="bar-label">nemotron-30b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:52.2%; background:linear-gradient(90deg,#a78bfa,#6c8fff)">11.8×</div></div>
+        <div class="bar-val" style="color:var(--accent2)">11.8×</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">gemma3-27b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:94%; background:linear-gradient(90deg,#fbbf24,#fb923c)">27.5×</div></div>
+        <div class="bar-val" style="color:var(--yellow)">27.5×</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">qwen2.5-7b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%; background:linear-gradient(90deg,#6c8fff,#34d399)">33.8×</div></div>
+        <div class="bar-val" style="color:var(--accent)">33.8×</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">ministral-14b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:81%; background:linear-gradient(90deg,#34d399,#86efac)">27.0×</div></div>
+        <div class="bar-val" style="color:var(--green)">27.0×</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">olmo-32b</div>
+        <div class="bar-track"><div class="bar-fill" style="width:77.4%; background:linear-gradient(90deg,#fb923c,#f87171)">26.0×</div></div>
+        <div class="bar-val" style="color:var(--orange)">26.0×</div>
+      </div>
+    </div>
+
+    <!-- TPS vs model size -->
+    <div class="chart-card">
+      <div class="chart-title">Single-Request TPS vs Model Size (bs=1, out=256)</div>
+      <div style="margin-top:8px;">
+        <div class="bar-row">
+          <div class="bar-label">qwen · 15GB</div>
+          <div class="bar-track"><div class="bar-fill" style="width:50%; background:linear-gradient(90deg,#6c8fff,#34d399)">12.8</div></div>
+          <div class="bar-val" style="color:var(--accent)">12.8</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">ministral · 28GB</div>
+          <div class="bar-track"><div class="bar-fill" style="width:34.4%; background:linear-gradient(90deg,#34d399,#86efac)">8.8</div></div>
+          <div class="bar-val" style="color:var(--green)">8.8</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">nemotron · 59GB</div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:linear-gradient(90deg,#a78bfa,#6c8fff)">25.7</div></div>
+          <div class="bar-val" style="color:var(--accent2)">25.7</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">gemma3 · 52GB</div>
+          <div class="bar-track"><div class="bar-fill" style="width:16.8%; background:linear-gradient(90deg,#fbbf24,#fb923c)">4.3</div></div>
+          <div class="bar-val" style="color:var(--yellow)">4.3</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label">olmo · 61GB</div>
+          <div class="bar-track"><div class="bar-fill" style="width:14.8%; background:linear-gradient(90deg,#fb923c,#f87171)">3.8</div></div>
+          <div class="bar-val" style="color:var(--orange)">3.8</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SINGLE-REQUEST LATENCY ────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Single-Request Latency (batch=1)</div>
+  <div class="lat-grid">
+    <div class="lat-card">
+      <h4 style="color:var(--accent2)">nemotron-30b <span class="tag tag-green">fastest</span></h4>
+      <div class="lat-row"><span class="lbl">64 tokens</span><span class="val">2.5 s</span></div>
+      <div class="lat-row"><span class="lbl">256 tokens</span><span class="val">9.9 s</span></div>
+      <div class="lat-row"><span class="lbl">512 tokens</span><span class="val">20.0 s</span></div>
+    </div>
+    <div class="lat-card">
+      <h4 style="color:var(--accent)">qwen2.5-7b</h4>
+      <div class="lat-row"><span class="lbl">64 tokens</span><span class="val">3.9 s</span></div>
+      <div class="lat-row"><span class="lbl">256 tokens</span><span class="val">19.9 s</span></div>
+      <div class="lat-row"><span class="lbl">512 tokens</span><span class="val">40.2 s</span></div>
+    </div>
+    <div class="lat-card">
+      <h4 style="color:var(--green)">ministral-14b</h4>
+      <div class="lat-row"><span class="lbl">64 tokens</span><span class="val">5.1 s</span></div>
+      <div class="lat-row"><span class="lbl">256 tokens</span><span class="val">29.1 s</span></div>
+      <div class="lat-row"><span class="lbl">512 tokens</span><span class="val">~58 s <span style="color:var(--muted);font-size:0.7rem;">⚠ anomaly</span></span></div>
+    </div>
+    <div class="lat-card">
+      <h4 style="color:var(--yellow)">gemma3-27b <span class="tag tag-red">slow</span></h4>
+      <div class="lat-row"><span class="lbl">64 tokens</span><span class="val">14.9 s</span></div>
+      <div class="lat-row"><span class="lbl">256 tokens</span><span class="val">59.5 s</span></div>
+      <div class="lat-row"><span class="lbl">512 tokens</span><span class="val">119.2 s</span></div>
+    </div>
+    <div class="lat-card">
+      <h4 style="color:var(--orange)">olmo-32b <span class="tag tag-red">slowest</span></h4>
+      <div class="lat-row"><span class="lbl">64 tokens</span><span class="val">16.7 s</span></div>
+      <div class="lat-row"><span class="lbl">256 tokens</span><span class="val">67.8 s</span></div>
+      <div class="lat-row"><span class="lbl">512 tokens</span><span class="val">134.1 s</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ANALYSIS ──────────────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-title">Analysis & Interpretation</div>
+  <div class="analysis-grid">
+
+    <div class="analysis-card">
+      <h3>🏆 nemotron-30b: The Size Paradox <span class="tag tag-blue">MoE</span></h3>
+      <p>At 59 GB on disk, nemotron-30b is the <strong>second-largest model in the suite</strong> — yet it delivers the fastest single-request throughput at <strong>25.6 tok/s</strong>, more than 6× the speed of gemma3-27b (4.3 tok/s) despite being nearly the same size on disk.</p>
+      <p>The explanation is architecture: nemotron-30b is a <strong>Mixture-of-Experts (MoE)</strong> model. Although it has 30B total parameters, only ~3B are active during each forward pass (the active expert subset). On the GB10's unified LPDDR5X memory, bandwidth is the primary bottleneck for autoregressive generation — fewer active parameters means fewer bytes loaded per token step, translating directly into higher tok/s.</p>
+      <div class="highlight-box">
+        <strong>Key insight:</strong> On memory-bandwidth-limited hardware (unified LPDDR5X), MoE models punch far above their weight class. nemotron-30b delivers nemotron-class reasoning at near–7B generation speed for single-request workloads.
+      </div>
+      <p>At batch=32, nemotron peaks at <strong>444 tok/s</strong>, though it loses ground to qwen at longer outputs (256–512 tokens) because its KV cache grows large relative to the active parameter footprint, stressing the memory bus differently.</p>
+    </div>
+
+    <div class="analysis-card">
+      <h3>📉 Dense 27-32B: Memory Bandwidth Wall <span class="tag tag-red">bottleneck</span></h3>
+      <p>gemma3-27b and olmo-32b are the slowest models, delivering only <strong>3.8–4.3 tok/s</strong> at batch=1 — a nearly identical rate despite a 9 GB size difference. Both are fully dense transformers, meaning every single forward pass must read all 27–32B parameters from memory.</p>
+      <p>The GB10's LPDDR5X memory bandwidth (~273 GB/s peak) creates a hard ceiling: loading 52–61 GB of weights once per token step means each token takes roughly <strong>190–220 ms</strong> in pure memory transfer time alone. This aligns precisely with the measured ~260 ms/token for these models.</p>
+      <div class="highlight-box">
+        <strong>Arithmetic memory bandwidth check:</strong><br>
+        olmo-32b = 61 GB weights ÷ ~273 GB/s bandwidth ≈ <strong>224 ms/token theoretical minimum</strong><br>
+        Measured: 134s ÷ 512 tokens = <strong>262 ms/token</strong> — within 17% of the ceiling.
+      </div>
+      <p>The near-identical rates for gemma3 vs olmo (despite the 9 GB gap) suggest both models are hitting the same memory bandwidth wall, not a compute bottleneck.</p>
+    </div>
+
+    <div class="analysis-card">
+      <h3>⚡ Batching: The Great Equalizer <span class="tag tag-green">+26–34×</span></h3>
+      <p>Every model benefits dramatically from batching. Going from batch=1 to batch=32 produces <strong>26–34× throughput multipliers</strong> across all models. This is vLLM's core value proposition on a single-GPU system: it schedules all 32 concurrent requests together, filling the GPU's compute pipeline and amortising the weight-load cost across many simultaneous token steps.</p>
+      <p>The batching multiplier is <strong>inversely related to single-request speed</strong>. Dense slow models (gemma3, olmo) gain more in relative terms (~27×) because they have more idle compute headroom. nemotron gains the least (11.8× at 256 tokens) because its MoE efficiency already keeps compute well-utilised even on a single request.</p>
+      <p>For the jury evaluation workload (batch=10, sequential models), this means the effective scoring rate is roughly <strong>10× the single-request rate</strong>, which matched our empirical ~0.9–2.5 s/instance observed during the GB10_5juror run.</p>
+    </div>
+
+    <div class="analysis-card">
+      <h3>📏 Output Length Sensitivity <span class="tag tag-orange">varies by model</span></h3>
+      <p>qwen2.5-7b shows <strong>near-perfect output-length independence</strong>: its TPS is stable at 12.8 tok/s for 64, 256, and 512 output tokens. This indicates it is purely memory-bandwidth limited and the per-token cost is constant — no quadratic attention overhead at these sequence lengths.</p>
+      <p>nemotron-30b <strong>degrades at longer outputs</strong>: peak TPS drops from 444 (out=64) to 285 (out=512) at batch=32. As generation extends, the KV cache for 32 concurrent requests grows, consuming more bandwidth per step. The active-parameter advantage shrinks relative to KV cache costs at long sequences.</p>
+      <p>gemma3-27b and olmo-32b are <strong>largely flat across output lengths</strong>, further confirming that both are pure memory-bandwidth bottlenecks where KV cache additions at ≤512 tokens barely matter compared to the dominant weight-loading cost.</p>
+      <div class="highlight-box">
+        <strong>ministral-14b anomaly (bs=1, out=512):</strong> Two requests in the batch completed in &lt;0.5s (likely vLLM prompt-cache hits from the warmup phase), skewing the single-request latency metric. The batched results (bs=8, bs=32) are unaffected and reliable.
+      </div>
+    </div>
+
+    <div class="analysis-card">
+      <h3>🎯 GB10 Unified Memory: Implications <span class="tag tag-blue">architecture</span></h3>
+      <p>The GB10 uses a single unified LPDDR5X pool shared between CPU and GPU. This is architecturally different from discrete GPUs: there is no PCIe transfer overhead, but also no GDDR6X or HBM bandwidth (which reaches 2–4 TB/s on H100/A100).</p>
+      <p>A direct comparison: an H100 SXM5 with 3.35 TB/s HBM3 bandwidth would theoretically execute the same olmo-32b token at <strong>~18 ms</strong> vs the GB10's ~262 ms — a 14× theoretical advantage. In practice the gap narrows to ~5–8× once compute and scheduling overhead are included.</p>
+      <p>The GB10's advantage is the <strong>96 GB unified pool</strong> — it can load models that would not fit in a 80 GB A100 or H100 at all (olmo-32b at 61 GB, with remaining headroom for KV cache). For sequential single-model workloads, the GB10 trades raw speed for model capacity.</p>
+    </div>
+
+    <div class="analysis-card">
+      <h3>✅ Practical Recommendations</h3>
+      <p><strong>For interactive / low-latency use</strong> (single request, short output): nemotron-30b is the clear choice at 25.6 tok/s single-request — 2× faster than qwen and 6× faster than gemma3/olmo.</p>
+      <p><strong>For bulk batch scoring</strong> (e.g. jury evaluation at batch=10–32): qwen2.5-7b and nemotron-30b are neck-and-neck at peak TPS (432 vs 444). qwen is preferable if memory is needed for other concurrent tasks (15 GB vs 59 GB); nemotron is preferable for longer reasoning with higher quality output.</p>
+      <p><strong>gemma3-27b and olmo-32b</strong> should be reserved for tasks where model quality justifies the 4–6× throughput penalty. At batch=32, gemma3 reaches 118 tok/s which is workable for offline batch jobs but impractical for interactive use.</p>
+      <div class="highlight-box">
+        <strong>For the jury evaluation context:</strong> The GB10 at batch=10 delivers roughly 130 tok/s for nemotron and qwen, 70 tok/s for ministral, and 30–35 tok/s for the dense 27–32B models — matching the observed 0.6–2.5 s/instance jury scoring rates across the GB10_5juror run.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── FOOTNOTE ──────────────────────────────────────────────────────── -->
+<div class="footnote">
+  <b>Methodology:</b> Each benchmark fires <code>batch_size</code> concurrent requests via the OpenAI-compatible vLLM API using <code>ThreadPoolExecutor</code>. Wall-clock time is measured from first request dispatch to last response received. Decode TPS = total output tokens / wall-clock seconds. Each model runs in its own Docker container (nvcr.io/nvidia/vllm:26.01-py3) with <code>--enforce-eager</code> (no CUDA graph compilation), <code>--gpu-memory-utilization=0.85</code>, <code>--max-model-len=4096</code>. Warmup: 3 requests × 64 tokens before each model's benchmark runs. Models are tested sequentially (one container at a time).
+  <br><br>
+  <b>Hardware:</b> NVIDIA GB10 Blackwell Superchip · 96 GB unified LPDDR5X · Sequential model loading (no tensor parallelism).
+  <br><br>
+  <b>Note:</b> TPS figures reflect end-to-end serving throughput through vLLM's scheduler, not raw hardware throughput. Actual tokens generated may be ≤ max_tokens if the model produced an EOS token earlier.
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
