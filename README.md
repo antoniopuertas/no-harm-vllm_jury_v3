@@ -195,8 +195,8 @@ The `--engine` flag controls how vLLM is loaded:
 
 | Flag | Engine | When to use |
 |------|--------|-------------|
-| `--engine native` | `NativeVLLMEngine` — loads vLLM in-process via Python | H100 and GB10 (default) |
-| `--engine docker` | `VLLMEngine` — spins up a vLLM Docker container per model | Any machine with Docker + NVIDIA Container Toolkit |
+| `--engine native` | `NativeVLLMEngine` — loads vLLM in-process via Python | H100 only |
+| `--engine docker` | `VLLMEngine` — spins up a vLLM Docker container per model | GB10 (and any machine with Docker + NVIDIA Container Toolkit) |
 
 The wrapper scripts (`run_harm_v2_sequential.sh`, `run_harm_v2_1000.sh`, `run_medqa_medmcqa.sh`) set `--engine` automatically based on `--gpu H100|GB10`.
 
@@ -217,7 +217,7 @@ Key differences from the H100 config:
 | `tensor_parallel_size` | 2 (large models) | 1 (all models) |
 | Engine | native (`--engine native`) | docker (`--engine docker`) |
 | Model paths | NFS staging | `~/.cache/huggingface/hub/` |
-| Throughput | ~2–2.5 h / 1000 samples | ~42–48 h / 1000 samples |
+| Throughput | ~2–2.5 h / 1000 samples | ~11 h / 1000 samples |
 | vLLM version | `vllm==0.18.1` | `nvcr.io/nvidia/vllm:26.01-py3` |
 
 > **Note on throughput:** The GB10 is significantly slower per-sample because models are loaded sequentially (one at a time) and the unified memory architecture has lower peak throughput for large batch inference compared to dedicated H100 HBM. The retry cascade (qwen2.5-coder-7b in particular) can add significant overhead on some datasets.
@@ -240,7 +240,20 @@ nohup bash scripts/run_1000_no_gemma.sh > logs/no_gemma_1000_$(date +%Y%m%d_%H%M
 
 # Run only gemma3-27b scoring on existing 4-juror results, then merge to 5-juror (background)
 nohup bash scripts/run_gemma_merge.sh > logs/gemma_merge_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+# Replace qwen scores with a fixed run (retry storm workaround) and re-aggregate
+nohup bash scripts/run_qwen_fix.sh > logs/qwen_fix_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+
+# TPS benchmark — measure tokens/second across all locally cached models
+python scripts/tps_benchmark.py                        # all 5 models
+python scripts/tps_benchmark.py --model qwen2.5-7b     # single model
+python scripts/tps_benchmark.py --skip nemotron-30b olmo-32b
 ```
+
+> **qwen2.5-coder-7b retry storm:** this model generates `<think>` blocks unconditionally, exhausting
+> the token budget before producing parseable output. `run_qwen_fix.sh` / `run_qwen_scoring_only.py`
+> re-score only qwen on existing results and re-aggregate. The proper fix requires disabling thinking
+> mode at the vLLM serve level: `--override-generation-config '{"thinking": false}'`.
 
 ---
 
@@ -343,19 +356,21 @@ python scripts/compare_v3_evaluations_with_viz.py
 
 ---
 
-### GB10 Results — 1000 samples per dataset (NVIDIA GB10 Blackwell)
+### GB10 Results — GB10_5juror (Final, 1000 samples per dataset)
 
-Evaluated on 1000 samples from each dataset using `config/vllm_jury_config_gb10.yaml`.
+5-juror evaluation on NVIDIA GB10 Blackwell using `config/vllm_jury_config_gb10.yaml`.
+Jurors: ministral-14b · nemotron-30b · olmo-32b · qwen2.5-coder-7b · gemma3-27b
 
-| Dataset | Instances | Low | Critical | Mean Score | Run Duration |
+| Dataset | Instances | Low | Critical | Mean Score | Median Score |
 |---------|-----------|-----|---------|------------|-------------|
-| pubmedqa | 1000 | 99.5% | 0.5% | 0.073 | ~48 h |
-| medqa | 1000 | 97.9% | 2.1% | — | ~47 h |
-| medmcqa | 1000 | 98.4% | 1.6% | — | ~42 h |
+| pubmedqa | 1000 | 99.1% | 0.9% | 0.109 | 0.105 |
+| medqa | 1000 | 90.7% | 9.3% | 0.141 | 0.108 |
+| medmcqa | 1000 | 95.7% | 4.3% | 0.084 | 0.060 |
 
-All runs used 5 jurors, `aggregation_method: median`, `critical_threshold: 0.4`, vLLM version `nvcr.io/nvidia/vllm:26.01-py3`.
+All runs used `aggregation_method: median`, `critical_threshold: 0.4`, vLLM `nvcr.io/nvidia/vllm:26.01-py3`.
+qwen2.5-coder-7b scores obtained via Retry 1 (0–10 numeric) due to unconditional `<think>` block generation exhausting the token budget.
 
-Raw results available in `data/results/vllm/harm_dimensions_v2/`.
+Raw results: `data/results/vllm/harm_dimensions_v2/GB10_5juror/`
 
 ---
 
